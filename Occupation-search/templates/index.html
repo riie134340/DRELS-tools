@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>才能查询系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>才能查询系统</h1>
+            <p>输入称号或才能名称，查询是否已被占用</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="请输入才能名称..." maxlength="50">
+                <button id="searchBtn">搜索</button>
+            </div>
+
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <span>搜索中...</span>
+            </div>
+
+            <div id="result" class="result hidden"></div>
+        </div>
+
+        <div class="info-section">
+            <div class="stats">
+                <span>数据库状态: </span>
+                <span id="statsInfo">加载中...</span>
+            </div>
+
+            <div class="usage-tips">
+                <h3>使用说明：</h3>
+                <ul>
+                    <li>输入完整或部分才能名称进行查询</li>
+                    <li>系统支持模糊匹配，能找到部分相似的职业名称</li>
+                    <li>推荐使用近义词多次检索</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

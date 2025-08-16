@@ -1,0 +1,283 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #d1d3c066 0%, #e7fa64 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+header h1 {
+    color: #333;
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    font-weight: 300;
+}
+
+header p {
+    color: #666;
+    font-size: 1.1em;
+}
+
+.search-section {
+    margin-bottom: 40px;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 15px 20px;
+    font-size: 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 50px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#searchBtn {
+    padding: 15px 30px;
+    background: linear-gradient(55deg, ##effb86 0%, #c4ff72 100%);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+#searchBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+#searchBtn:active {
+    transform: translateY(0);
+}
+
+#searchBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #667eea;
+    font-size: 16px;
+    margin: 20px 0;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e1e5e9;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.result {
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 15px;
+    font-size: 16px;
+    line-height: 1.6;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.result.success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border-left: 5px solid #2e7d32;
+}
+
+.result.error {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    border-left: 5px solid #d32f2f;
+}
+
+.result.suggestions {
+    background: linear-gradient(135deg, #ffa726, #ff9800);
+    color: white;
+    border-left: 5px solid #f57c00;
+}
+
+.match-info {
+    margin-top: 10px;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.suggestions {
+    margin-top: 15px;
+}
+
+.suggestions h4 {
+    margin-bottom: 10px;
+}
+
+.suggestion-list {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.suggestion-item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.suggestion-item:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.info-section {
+    border-top: 1px solid #e1e5e9;
+    padding-top: 30px;
+}
+
+.stats {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #666;
+    font-size: 14px;
+}
+
+.usage-tips {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 15px;
+    border-left: 4px solid #d8ea66;
+}
+
+.usage-tips h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.usage-tips ul {
+    list-style: none;
+    padding: 0;
+}
+
+.usage-tips li {
+    padding: 5px 0;
+    color: #666;
+    position: relative;
+    padding-left: 20px;
+}
+
+.usage-tips li:before {
+    content: "•";
+    color: #c6d661
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+/* 状态徽章样式 */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.status-occupied {
+    background-color: #ff4757;
+    color: white;
+}
+
+.status-hold {
+    background-color: #ffa502;
+    color: white;
+}
+
+.status-available {
+    background-color: #2ed573;
+    color: white;
+}
+
+.status-unknown {
+    background-color: #747d8c;
+    color: white;
+}
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+        margin: 10px;
+    }
+
+    header h1 {
+        font-size: 2em;
+    }
+
+    .search-box {
+        flex-direction: column;
+    }
+
+    #searchBtn {
+        min-width: auto;
+    }
+
+    .suggestion-list {
+        flex-direction: column;
+    }
+}
