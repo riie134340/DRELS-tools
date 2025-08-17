@@ -294,7 +294,7 @@
     <div class="container">
         <header>
             <h1>才能查询系统</h1>
-            <p>快速查询才能称号的可用状态</p>
+            <p>快速查询才能称号的可用状态，DRELS企划用</p>
         </header>
 
         <div class="search-section">
@@ -329,7 +329,17 @@
 
     <script>
         // 这里是加密的数据 - 在实际使用时会被data_processor.py生成的数据替换
-        const ENCRYPTED_DATA = {"hashes":{"934456360":{"status":"Occupied","aliases":["编年史作者"]},"722721981":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"编年史撰写者"},"2788793379":{"status":"Occupied","aliases":[]},"2514771609":{"status":"Occupied","aliases":["天然物化学家"]},"2514762314":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"天然物化学者"},"775706248":{"status":"Occupied","aliases":[]},"20919488":{"status":"Occupied","aliases":["修验者","山伏"]},"20923239":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"修験者"},"753854":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"修験者"},"22444667":{"status":"Hold","aliases":[]},"20985435":{"status":"Hold","aliases":[]}},"fuzzy_map":{"20923239":["753854"],"753854":["20923239"]},"total_count":7};
+        const ENCRYPTED_DATA = {
+            // 示例数据结构，实际数据会在构建时注入
+            hashes: {
+                // "hash1": { status: "Available", aliases: ["alias1", "alias2"] },
+                // "hash2": { status: "Occupied", aliases: [] }
+            },
+            fuzzy_map: {
+                // "fuzzy_hash1": ["hash1", "hash2"]
+            },
+            total_count: 0
+        };
 
         // 简单的字符串哈希函数（与Python版本保持一致）
         function simpleHash(str) {
@@ -397,6 +407,20 @@
                 'Available': 'status-available'
             };
             return statusMap[status] || 'status-unknown';
+        }
+
+        // 获取北京时间格式的最后更新时间
+        function getBeijingTime() {
+            const lastModified = new Date(document.lastModified);
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Asia/Shanghai'
+            };
+            return lastModified.toLocaleString('zh-CN', options);
         }
 
         // 执行搜索
@@ -550,8 +574,11 @@
             const searchBtn = document.getElementById('searchBtn');
             const statsInfo = document.getElementById('statsInfo');
 
-            // 更新统计信息
-            statsInfo.textContent = `已加载 ${ENCRYPTED_DATA.total_count} 个才能，数据源：静态数据`;
+            // 获取更新时间
+            const updateTime = getBeijingTime();
+
+            // 更新统计信息，包含更新时间
+            statsInfo.textContent = `已加载 ${ENCRYPTED_DATA.total_count} 个才能，最后更新：${updateTime}`;
 
             // 绑定事件
             searchBtn.addEventListener('click', performSearch);
