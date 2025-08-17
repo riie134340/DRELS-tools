@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DRELS才能查询系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #d1d3c066 0%, #e7fa64 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .search-section {
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 50px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #searchInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #searchBtn {
+            padding: 15px 30px;
+            background: linear-gradient(55deg, #effb86 0%, #c4ff72 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+        }
+
+        #searchBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        #searchBtn:active {
+            transform: translateY(0);
+        }
+
+        #searchBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #667eea;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e1e5e9;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 16px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result.success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border-left: 5px solid #2e7d32;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border-left: 5px solid #d32f2f;
+        }
+
+        .result.suggestions {
+            background: linear-gradient(135deg, #ffa726, #ff9800);
+            color: white;
+            border-left: 5px solid #f57c00;
+        }
+
+        .match-info {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .suggestions {
+            margin-top: 15px;
+        }
+
+        .suggestions h4 {
+            margin-bottom: 10px;
+        }
+
+        .suggestion-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .suggestion-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .info-section {
+            border-top: 1px solid #e1e5e9;
+            padding-top: 30px;
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .usage-tips {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #d8ea66;
+        }
+
+        .usage-tips h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .usage-tips ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .usage-tips li {
+            padding: 5px 0;
+            color: #666;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .usage-tips li:before {
+            content: "•";
+            color: #c6d661;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* 状态徽章样式 */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .status-occupied {
+            background-color: #ff4757;
+            color: white;
+        }
+
+        .status-hold {
+            background-color: #ffa502;
+            color: white;
+        }
+
+        .status-available {
+            background-color: #2ed573;
+            color: white;
+        }
+
+        .status-unknown {
+            background-color: #747d8c;
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            header h1 {
+                font-size: 2em;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            #searchBtn {
+                min-width: auto;
+            }
+
+            .suggestion-list {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>才能查询系统</h1>
+            <p>快速查询才能称号的可用状态，DRELS企划用</p>
+        </header>
+
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="输入要查询的才能名称...">
+                <button id="searchBtn">搜索</button>
+            </div>
+
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <span>搜索中...</span>
+            </div>
+
+            <div id="result" class="result hidden"></div>
+        </div>
+
+        <div class="info-section">
+            <div class="stats">
+                <span id="statsInfo">已加载数据中...</span>
+            </div>
+
+            <div class="usage-tips">
+                <h3>使用说明</h3>
+                <ul>
+                    <li>输入完整才能名称进行查询</li>
+                    <li>绿色表示可用，橙色表示保留，红色表示已占用</li>
+                    <li>系统暂不支持模糊匹配（开发中）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 这里是加密的数据 - 在实际使用时会被data_processor.py生成的数据替换
+        const ENCRYPTED_DATA = {
+            // 示例数据结构，实际数据会在构建时注入
+            hashes: {
+                // "hash1": { status: "Available", aliases: ["alias1", "alias2"] },
+                // "hash2": { status: "Occupied", aliases: [] }
+            },
+            fuzzy_map: {
+                // "fuzzy_hash1": ["hash1", "hash2"]
+            },
+            total_count: 0
+        };
+
+        // 简单的字符串哈希函数（与Python版本保持一致）
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // 转换为32位整数
+            }
+            return Math.abs(hash).toString();
+        }
+
+        // 模糊匹配函数
+        function fuzzyMatch(query, target) {
+            query = query.toLowerCase();
+            target = target.toLowerCase();
+
+            if (target.includes(query)) return true;
+
+            // 简单的编辑距离计算
+            const maxDistance = Math.floor(query.length / 3);
+            return editDistance(query, target) <= maxDistance;
+        }
+
+        // 编辑距离计算
+        function editDistance(a, b) {
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) {
+                matrix[i] = [i];
+            }
+            for (let j = 0; j <= a.length; j++) {
+                matrix[0][j] = j;
+            }
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        }
+
+        // 获取状态的中文描述
+        function getChineseStatus(status) {
+            const statusMap = {
+                'Available': '可用',
+                'Occupied': '已占用',
+                'Hold': '保留中'
+            };
+            return statusMap[status] || '未知';
+        }
+
+        // 获取状态的CSS类名
+        function getStatusClass(status) {
+            const statusMap = {
+                'Occupied': 'status-occupied',
+                'Hold': 'status-hold',
+                'Available': 'status-available'
+            };
+            return statusMap[status] || 'status-unknown';
+        }
+
+        // 执行搜索
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+
+            if (!query) {
+                showResult('请输入要查询的职业名称', 'error');
+                return;
+            }
+
+            showLoading(true);
+            hideResult();
+            document.getElementById('searchBtn').disabled = true;
+
+            // 模拟异步搜索
+            setTimeout(() => {
+                const result = searchInData(query);
+
+                showLoading(false);
+                document.getElementById('searchBtn').disabled = false;
+
+                if (result.success) {
+                    showSuccessResult(result);
+                } else {
+                    showErrorResult(result);
+                }
+            }, 500);
+        }
+
+        // 在数据中搜索
+        function searchInData(query) {
+            const queryHash = simpleHash(query.toLowerCase().trim());
+
+            // 精确匹配
+            if (ENCRYPTED_DATA.hashes[queryHash]) {
+                const data = ENCRYPTED_DATA.hashes[queryHash];
+                return {
+                    success: true,
+                    message: `找到职业才能：${query}`,
+                    data: {
+                        match_type: 'exact',
+                        status: data.status,
+                        chinese_status: getChineseStatus(data.status),
+                        has_aliases: data.aliases && data.aliases.length > 0
+                    }
+                };
+            }
+
+            // 模糊匹配
+            const suggestions = [];
+            for (const [hash, data] of Object.entries(ENCRYPTED_DATA.hashes)) {
+                // 这里需要反向匹配，但由于数据已加密，我们使用预计算的模糊映射
+                // 在实际实现中，data_processor.py会生成模糊匹配的映射关系
+            }
+
+            // 如果有建议
+            if (suggestions.length > 0) {
+                return {
+                    success: false,
+                    message: `未找到"${query}"的精确匹配`,
+                    suggestions: suggestions.slice(0, 5) // 最多显示5个建议
+                };
+            }
+
+            return {
+                success: false,
+                message: `未找到"${query}"相关的职业才能`,
+                suggestions: []
+            };
+        }
+
+        // 显示成功结果
+        function showSuccessResult(data) {
+            let html = `<div class="main-message">${data.message}</div>`;
+
+            if (data.data) {
+                html += '<div class="match-info">';
+
+                if (data.data.match_type === 'exact') {
+                    html += '<strong>✓ 精确匹配</strong>';
+                } else if (data.data.match_type === 'fuzzy') {
+                    html += '<strong>~ 模糊匹配</strong>';
+                }
+
+                if (data.data.has_aliases) {
+                    html += '<br>该职业存在别称';
+                }
+
+                const statusClass = getStatusClass(data.data.status);
+                html += `<br><span class="status-badge ${statusClass}">状态: ${data.data.chinese_status}</span>`;
+                html += '</div>';
+            }
+
+            showResult(html, 'success');
+        }
+
+        // 显示错误结果
+        function showErrorResult(data) {
+            let html = `<div class="main-message">${data.message}</div>`;
+
+            if (data.suggestions && data.suggestions.length > 0) {
+                html += `
+                    <div class="suggestions">
+                        <h4>您可能想查询：</h4>
+                        <div class="suggestion-list">
+                            ${data.suggestions.map(suggestion =>
+                                `<span class="suggestion-item" onclick="searchSuggestion('${suggestion}')">${suggestion}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+                showResult(html, 'suggestions');
+            } else {
+                showResult(html, 'error');
+            }
+        }
+
+        // 点击建议词搜索
+        function searchSuggestion(suggestion) {
+            document.getElementById('searchInput').value = suggestion;
+            performSearch();
+        }
+
+        // 显示结果
+        function showResult(message, type) {
+            const result = document.getElementById('result');
+            result.innerHTML = message;
+            result.className = `result ${type}`;
+            result.classList.remove('hidden');
+        }
+
+        // 隐藏结果
+        function hideResult() {
+            document.getElementById('result').classList.add('hidden');
+        }
+
+        // 显示/隐藏加载状态
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.remove('hidden');
+            } else {
+                loading.classList.add('hidden');
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const statsInfo = document.getElementById('statsInfo');
+
+            // 更新统计信息
+            statsInfo.textContent = `已加载 ${ENCRYPTED_DATA.total_count} 个才能，数据源：静态数据`;
+
+            // 绑定事件
+            searchBtn.addEventListener('click', performSearch);
+
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+
+            searchInput.addEventListener('focus', function() {
+                const result = document.getElementById('result');
+                if (result.classList.contains('error') || result.classList.contains('suggestions')) {
+                    hideResult();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
