@@ -1,0 +1,114 @@
+@font-face {
+  font-family: 'FusionPixel';
+  src: url('./assets/font/fusion-pixel/fusion-pixel-10px-monospaced-zh_hans.ttf.woff') format('woff');
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'FusionPixel', monospace;
+  display: flex;
+  align-items: flex-start;
+  background-color: #fff; /* ← 也同时改了背景色 */
+}
+
+.controls {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 220px;
+  height: 100vh;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  border-left: 1px solid #ccc;
+  z-index: 9999;
+
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.controls label {
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.controls input[type="range"],
+.controls input[type="text"] {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.controls button {
+  padding: 6px 8px;
+  background-color: #555;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.controls button:hover {
+  background-color: #333;
+}
+
+
+.page {
+  position: relative;
+  width: 1230px;
+  height: 1729px;
+  background-color: #fff;
+  background-image: url('./assets/img/bkgd.png');
+  background-size: cover;
+  overflow: hidden;
+  top: 40px;   /* ← y轴偏移 */
+  left: 40px;  /* ← x轴偏移 */
+  transform-origin: top left;
+}
+
+/* 编号 */
+.identifier {
+  position: absolute;
+  top: 0;
+  left: 100px;
+  width: 328px;
+  height: 80px;
+  font-size: 48px;
+  text-align: center;
+  line-height: 80px;
+  color: #fff;
+  font-family: 'FusionPixel', monospace;
+}
+
+/* Box */
+.box {
+  width: 826px;
+  height: 455px;
+  position: absolute;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+#box1 { top: 275px; left: 332px; }
+#box2 { top: 741px; left: 332px; }
+#box3 { top: 1207px; left: 332px; }
+
+/* 页码 */
+.page-number {
+  position: absolute;
+  top: 1565px;
+  left: 65px;
+  width: 150px;
+  height: 120px;
+  font-size: 120px;
+  text-align: center;
+  line-height: 120px;
+  color: rgba(221, 171, 156, 0.3);
+  font-family: 'FusionPixel', monospace;
+}
