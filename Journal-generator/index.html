@@ -36,18 +36,27 @@
 
   <hr>
 
+  <h3>⚙️ 页面设置</h3>
+
+  <label for="identifier-input">编号：</label>
+  <input type="text" id="identifier-input" value="CH01-#1">
+
+  <label for="start-page-input">起始页码：</label>
+  <input type="text" id="start-page-input" value="02">
+
+  <button id="apply-settings">应用设置</button>
+  <small style="color: #666; font-size: 10px;">生成后可实时修改</small>
+
+  <hr>
+
+  <h3>🎛️ 显示控制</h3>
+
   <label for="scale-range">缩放：</label>
   <input type="range" id="scale-range" min="0.2" max="2" step="0.05" value="1">
 
-  <label for="identifier-input">编号：</label>
-  <input type="text" id="identifier-input" value="DP-01">
-
-  <label for="page-number-input">页码：</label>
-  <input type="text" id="page-number-input" value="02">
-
-  <button id="update-btn">更新</button>
-
   <hr>
+
+  <h3>📤 导出</h3>
 
   <button id="export-png" class="export-btn" disabled>导出PNG</button>
   <div id="export-status" style="display: none;"></div>

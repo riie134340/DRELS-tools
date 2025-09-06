@@ -3,6 +3,8 @@ function fitPageToWindow() {
   const page = document.querySelector('.page');
   const container = document.querySelector('.page-wrapper');
 
+  if (!page) return;
+
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
 
@@ -17,29 +19,74 @@ function fitPageToWindow() {
 
 function setupZoomControl() {
   const scaleInput = document.getElementById("scale-range");
-  const page = document.querySelector(".page");
+  const pages = document.querySelectorAll(".page");
 
   scaleInput.addEventListener("input", () => {
     const factor = scaleInput.value;
-    const base = parseFloat(page.dataset.scale || 1);
-    const newScale = base * factor;
-    page.style.transform = `scale(${newScale})`;
+
+    pages.forEach(page => {
+      const base = parseFloat(page.dataset.scale || 1);
+      const newScale = base * factor;
+      page.style.transform = `scale(${newScale})`;
+    });
   });
 }
 
+// 多页面缩放控制
+function setupMultiPageZoom() {
+  const scaleInput = document.getElementById("scale-range");
+  const pages = document.querySelectorAll(".page");
+
+  // 为所有页面设置基础缩放数据
+  const windowWidth = window.innerWidth - 260; // 减去控制面板宽度
+  const windowHeight = window.innerHeight;
+
+  pages.forEach(page => {
+    const scaleX = windowWidth / page.offsetWidth;
+    const scaleY = windowHeight / page.offsetHeight;
+    const scale = Math.min(scaleX, scaleY, 1);
+    page.dataset.scale = scale;
+    page.style.transform = `scale(${scale})`;
+  });
+
+  // 重新绑定缩放控制
+  const newHandler = () => {
+    const factor = scaleInput.value;
+    pages.forEach(page => {
+      const base = parseFloat(page.dataset.scale || 1);
+      const newScale = base * factor;
+      page.style.transform = `scale(${newScale})`;
+    });
+  };
+
+  // 移除旧的事件监听器，添加新的
+  scaleInput.removeEventListener("input", newHandler);
+  scaleInput.addEventListener("input", newHandler);
+}
+
 function setupControls() {
-  const pageNumberInput = document.getElementById("page-number-input");
   const identifierInput = document.getElementById("identifier-input");
+  const startPageInput = document.getElementById("start-page-input");
 
-  const pageNumElement = document.querySelector(".page-number");
-  const identifierElement = document.querySelector(".identifier");
-
-  document.getElementById("update-btn").addEventListener("click", () => {
+  // 添加应用按钮功能
+  document.getElementById("apply-settings").addEventListener("click", () => {
     const newId = identifierInput.value.trim();
-    const newPage = pageNumberInput.value.trim();
+    const newStartPage = startPageInput.value.trim();
 
-    if (newId) identifierElement.textContent = newId;
-    if (newPage) pageNumElement.textContent = newPage;
+    // 更新所有页面的标识符
+    const identifiers = document.querySelectorAll(".identifier");
+    identifiers.forEach(el => {
+      if (newId) el.textContent = newId;
+    });
+
+    // 更新所有页面的页码
+    const pageNumbers = document.querySelectorAll(".page-number");
+    pageNumbers.forEach((el, index) => {
+      if (newStartPage) {
+        const pageNum = parseInt(newStartPage) + index;
+        el.textContent = pageNum.toString().padStart(2, '0');
+      }
+    });
   });
 }
 
@@ -50,12 +97,14 @@ class LayoutGenerator {
     this.currentFile = null;
     this.startPageNumber = 2;
     this.identifier = 'DP-01';
+    this.isGenerated = false;
     this.init();
   }
 
   init() {
     this.setupDataImport();
     this.setupExport();
+    this.setupSettings();
   }
 
   setupDataImport() {
@@ -86,6 +135,43 @@ class LayoutGenerator {
   setupExport() {
     document.getElementById('export-png').addEventListener('click', () => {
       this.exportToPNG();
+    });
+  }
+
+  setupSettings() {
+    // 应用设置按钮
+    document.getElementById('apply-settings').addEventListener('click', () => {
+      if (this.isGenerated) {
+        this.applySettings();
+      }
+    });
+  }
+
+  applySettings() {
+    const newId = document.getElementById('identifier-input').value.trim();
+    const newStartPage = parseInt(document.getElementById('start-page-input').value) || 2;
+
+    if (!newId) {
+      alert('请输入编号');
+      return;
+    }
+
+    this.identifier = newId;
+    this.startPageNumber = newStartPage;
+
+    // 更新所有页面
+    const pages = document.querySelectorAll('.page');
+    pages.forEach((page, pageIndex) => {
+      // 更新标识符
+      const identifier = page.querySelector('.identifier');
+      if (identifier) identifier.textContent = newId;
+
+      // 更新页码
+      const pageNumber = page.querySelector('.page-number');
+      if (pageNumber) {
+        const pageNum = newStartPage + pageIndex;
+        pageNumber.textContent = pageNum.toString().padStart(2, '0');
+      }
     });
   }
 
@@ -273,8 +359,14 @@ class LayoutGenerator {
   }
 
   showDataPreview(data) {
+    console.log('showDataPreview 调用，data:', data);
     const preview = document.getElementById('data-preview');
     const content = document.getElementById('preview-content');
+
+    if (!preview || !content) {
+      console.error('找不到预览元素');
+      return;
+    }
 
     if (data.length === 0) {
       content.innerHTML = '无数据';
@@ -301,7 +393,7 @@ class LayoutGenerator {
 
     // 获取当前设置
     this.identifier = document.getElementById('identifier-input').value || 'DP-01';
-    this.startPageNumber = parseInt(document.getElementById('page-number-input').value) || 2;
+    this.startPageNumber = parseInt(document.getElementById('start-page-input').value) || 2;
 
     const wrapper = document.querySelector('.page-wrapper');
     wrapper.innerHTML = '';
@@ -319,8 +411,13 @@ class LayoutGenerator {
       wrapper.appendChild(pageElement);
     }
 
-    // 重新应用缩放
-    setupZoomControl();
+    // 切换到多页面缩放模式
+    setupMultiPageZoom();
+
+    // 标记为已生成
+    this.isGenerated = true;
+
+    // 启用相关功能
     document.getElementById('export-png').disabled = false;
   }
 

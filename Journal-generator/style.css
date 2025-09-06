@@ -9,7 +9,7 @@ body {
   font-family: 'FusionPixel', monospace;
   display: flex;
   align-items: flex-start;
-  background-color: #fff; /* ← 保持原来的背景色 */
+  background-color: #fff;
 }
 
 .controls {
@@ -21,43 +21,61 @@ body {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
   border-left: 1px solid #ccc;
   z-index: 9999;
 
   font-family: sans-serif;
   font-size: 14px;
+
+  /* 添加滚动支持 */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .controls h3 {
   margin: 8px 0 4px 0;
   color: #333;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
 }
 
 .controls hr {
   border: none;
   border-top: 1px solid #eee;
-  margin: 8px 0;
+  margin: 6px 0;
 }
 
 .controls label {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   font-weight: bold;
+  font-size: 12px;
+  color: #555;
 }
 
 .controls input[type="range"],
 .controls input[type="text"],
 .controls input[type="file"],
-.controls select {
+.controls select,
+.controls textarea {
   width: 100%;
   padding: 4px 6px;
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
+  font-family: monospace;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.controls textarea {
+  resize: vertical;
+  min-height: 60px;
 }
 
 .controls button {
@@ -67,6 +85,8 @@ body {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 11px;
+  margin-bottom: 4px;
 }
 
 .controls button:hover {
@@ -86,6 +106,14 @@ body {
   background-color: #1e7e34 !important;
 }
 
+#apply-settings {
+  background-color: #007bff !important;
+}
+
+#apply-settings:hover {
+  background-color: #0056b3 !important;
+}
+
 .encoding-options {
   background: #f8f9fa;
   padding: 6px;
@@ -100,20 +128,33 @@ body {
 }
 
 .data-preview {
-  max-height: 120px;
+  max-height: 100px;
   overflow-y: auto;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 6px;
   background: #f9f9f9;
-  font-size: 11px;
+  font-size: 10px;
   font-family: monospace;
+  margin-bottom: 6px;
 }
 
 #export-status {
-  font-size: 12px;
+  font-size: 11px;
   color: #666;
   margin-top: 4px;
+  padding: 4px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.controls small {
+  font-size: 10px;
+  color: #888;
+  margin-top: -4px;
+  margin-bottom: 4px;
+  display: block;
 }
 
 .page-wrapper {
@@ -131,8 +172,8 @@ body {
   background-image: url('./assets/img/bkgd.png');
   background-size: cover;
   overflow: hidden;
-  top: 40px;   /* ← 保持原来的y轴偏移 */
-  left: 40px;  /* ← 保持原来的x轴偏移 */
+  top: 40px;   /* 保持原来的y轴偏移 */
+  left: 40px;  /* 保持原来的x轴偏移 */
   transform-origin: top left;
 }
 
@@ -185,6 +226,8 @@ body {
   line-height: 1.4;
   color: #fff;
   font-family: 'FusionPixel', monospace;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .data-field {
@@ -198,4 +241,31 @@ body {
 .field-label {
   font-weight: bold;
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* 滚动条美化 */
+.controls::-webkit-scrollbar,
+.box-content::-webkit-scrollbar,
+.data-preview::-webkit-scrollbar {
+  width: 6px;
+}
+
+.controls::-webkit-scrollbar-track,
+.box-content::-webkit-scrollbar-track,
+.data-preview::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.controls::-webkit-scrollbar-thumb,
+.box-content::-webkit-scrollbar-thumb,
+.data-preview::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+}
+
+.controls::-webkit-scrollbar-thumb:hover,
+.box-content::-webkit-scrollbar-thumb:hover,
+.data-preview::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
 }
