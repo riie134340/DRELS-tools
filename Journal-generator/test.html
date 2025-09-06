@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>排版工具</title>
+  <style>
+    @font-face {
+      font-family: 'FusionPixel';
+      src: url('data:font/woff;base64,') format('woff');
+      font-display: swap;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'FusionPixel', 'Courier New', monospace;
+      display: flex;
+      align-items: flex-start;
+      background-color: #f5f5f5;
+      overflow-x: auto;
+    }
+
+    .controls {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 280px;
+      height: 100vh;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+      border-left: 1px solid #ccc;
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      overflow-y: auto;
+    }
+
+    .controls h3 {
+      margin: 0 0 8px 0;
+      color: #333;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 4px;
+    }
+
+    .controls label {
+      margin-bottom: 4px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    .controls input[type="range"],
+    .controls input[type="text"],
+    .controls input[type="file"] {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    .controls button {
+      padding: 8px 12px;
+      background-color: #007acc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .controls button:hover {
+      background-color: #005a9e;
+    }
+
+    .controls button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .export-btn {
+      background-color: #28a745 !important;
+    }
+
+    .export-btn:hover {
+      background-color: #1e7e34 !important;
+    }
+
+    .data-preview {
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      background: #f9f9f9;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    .pages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      padding: 40px;
+      padding-right: 320px;
+    }
+
+    .page {
+      position: relative;
+      width: 1230px;
+      height: 1729px;
+      background-color: #fff;
+      background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      overflow: hidden;
+      transform-origin: top left;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border: 1px solid #ddd;
+    }
+
+    .identifier {
+      position: absolute;
+      top: 0;
+      left: 100px;
+      width: 328px;
+      height: 80px;
+      font-size: 48px;
+      text-align: center;
+      line-height: 80px;
+      color: #333;
+      font-family: 'FusionPixel', 'Courier New', monospace;
+      font-weight: bold;
+    }
+
+    .box {
+      width: 826px;
+      height: 455px;
+      position: absolute;
+      background-color: rgba(0, 123, 255, 0.05);
+      border: 2px dashed rgba(0, 123, 255, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #box1 { top: 275px; left: 332px; }
+    #box2 { top: 741px; left: 332px; }
+    #box3 { top: 1207px; left: 332px; }
+
+    .page-number {
+      position: absolute;
+      top: 1565px;
+      left: 65px;
+      width: 150px;
+      height: 120px;
+      font-size: 120px;
+      text-align: center;
+      line-height: 120px;
+      color: rgba(0, 0, 0, 0.2);
+      font-family: 'FusionPixel', 'Courier New', monospace;
+      font-weight: bold;
+    }
+
+    .box-content {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    .data-field {
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 4px;
+      border-left: 3px solid #007acc;
+    }
+
+    .field-label {
+      font-weight: bold;
+      color: #007acc;
+    }
+
+    .loading {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
+
+    .google-sheets-input {
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <h3>📊 数据导入</h3>
+
+  <label for="file-input">选择Excel文件：</label>
+  <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+
+  <div class="google-sheets-input">
+    <label for="sheets-url">或输入Google Sheets URL：</label>
+    <input type="text" id="sheets-url" placeholder="粘贴Google Sheets分享链接...">
+    <button id="load-sheets">加载</button>
+  </div>
+
+  <div id="data-preview" class="data-preview" style="display: none;">
+    <strong>数据预览：</strong>
+    <div id="preview-content"></div>
+  </div>
+
+  <button id="generate-layout">生成排版</button>
+
+  <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;">
+
+  <h3>🎛️ 页面控制</h3>
+
+  <label for="scale-range">缩放比例：</label>
+  <input type="range" id="scale-range" min="0.1" max="1" step="0.05" value="0.3">
+  <span id="scale-value">30%</span>
+
+  <label for="identifier-input">标识符：</label>
+  <input type="text" id="identifier-input" value="DP-01">
+
+  <label for="start-page-input">起始页码：</label>
+  <input type="text" id="start-page-input" value="02">
+
+  <button id="update-pages">更新页面</button>
+
+  <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;">
+
+  <h3>📤 导出</h3>
+
+  <button id="export-png" class="export-btn" disabled>导出PNG</button>
+
+  <div id="export-status" style="display: none; margin-top: 8px; font-size: 12px; color: #666;">
+  </div>
+</div>
+
+<div class="pages-container" id="pages-container">
+  <div class="page" data-page-num="02">
+    <div class="identifier">DP-01</div>
+    <div class="box" id="box1"></div>
+    <div class="box" id="box2"></div>
+    <div class="box" id="box3"></div>
+    <div class="page-number">02</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+class LayoutTool {
+  constructor() {
+    this.data = [];
+    this.currentScale = 0.3;
+    this.startPageNumber = 2;
+    this.identifier = 'DP-01';
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.updateScale();
+  }
+
+  setupEventListeners() {
+    // File input
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      this.handleFileInput(e);
+    });
+
+    // Google Sheets
+    document.getElementById('load-sheets').addEventListener('click', () => {
+      this.loadGoogleSheets();
+    });
+
+    // Generate layout
+    document.getElementById('generate-layout').addEventListener('click', () => {
+      this.generateLayout();
+    });
+
+    // Scale control
+    document.getElementById('scale-range').addEventListener('input', (e) => {
+      this.currentScale = parseFloat(e.target.value);
+      this.updateScale();
+    });
+
+    // Page controls
+    document.getElementById('update-pages').addEventListener('click', () => {
+      this.updatePageInfo();
+    });
+
+    // Export
+    document.getElementById('export-png').addEventListener('click', () => {
+      this.exportToPNG();
+    });
+  }
+
+  updateScale() {
+    const pages = document.querySelectorAll('.page');
+    const scaleValue = document.getElementById('scale-value');
+
+    pages.forEach(page => {
+      page.style.transform = `scale(${this.currentScale})`;
+    });
+
+    scaleValue.textContent = Math.round(this.currentScale * 100) + '%';
+  }
+
+  async handleFileInput(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const data = await this.readExcelFile(file);
+      this.data = data;
+      this.showDataPreview(data);
+      document.getElementById('generate-layout').disabled = false;
+    } catch (error) {
+      alert('文件读取失败: ' + error.message);
+    }
+  }
+
+  async readExcelFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const workbook = XLSX.read(e.target.result, { type: 'binary' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+          // Convert to objects with headers
+          if (jsonData.length > 1) {
+            const headers = jsonData[0];
+            const rows = jsonData.slice(1).map(row => {
+              const obj = {};
+              headers.forEach((header, index) => {
+                obj[header] = row[index] || '';
+              });
+              return obj;
+            });
+            resolve(rows);
+          } else {
+            resolve([]);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      reader.onerror = () => reject(new Error('文件读取错误'));
+      reader.readAsBinaryString(file);
+    });
+  }
+
+  async loadGoogleSheets() {
+    const url = document.getElementById('sheets-url').value.trim();
+    if (!url) {
+      alert('请输入Google Sheets链接');
+      return;
+    }
+
+    try {
+      // Convert Google Sheets URL to CSV export URL
+      let csvUrl;
+      if (url.includes('/edit')) {
+        csvUrl = url.replace('/edit#gid=', '/export?format=csv&gid=')
+                    .replace('/edit', '/export?format=csv');
+      } else {
+        csvUrl = url + '/export?format=csv';
+      }
+
+      const response = await fetch(csvUrl);
+      if (!response.ok) throw new Error('无法访问Google Sheets');
+
+      const csvText = await response.text();
+      const data = this.parseCSV(csvText);
+
+      this.data = data;
+      this.showDataPreview(data);
+      document.getElementById('generate-layout').disabled = false;
+
+    } catch (error) {
+      alert('加载Google Sheets失败: ' + error.message);
+    }
+  }
+
+  parseCSV(csvText) {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim());
+    return lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.replace(/"/g, '').trim());
+      const obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = values[index] || '';
+      });
+      return obj;
+    });
+  }
+
+  showDataPreview(data) {
+    const preview = document.getElementById('data-preview');
+    const content = document.getElementById('preview-content');
+
+    if (data.length === 0) {
+      content.innerHTML = '无数据';
+      preview.style.display = 'block';
+      return;
+    }
+
+    const headers = Object.keys(data[0]);
+    let html = `共 ${data.length} 行数据<br>`;
+    html += `列: ${headers.join(', ')}<br><br>`;
+
+    // Show first 3 rows as example
+    data.slice(0, 3).forEach((row, index) => {
+      html += `Row ${index + 1}: ${JSON.stringify(row)}<br>`;
+    });
+
+    if (data.length > 3) {
+      html += `... 还有 ${data.length - 3} 行`;
+    }
+
+    content.innerHTML = html;
+    preview.style.display = 'block';
+  }
+
+  generateLayout() {
+    if (this.data.length === 0) {
+      alert('请先导入数据');
+      return;
+    }
+
+    const container = document.getElementById('pages-container');
+    container.innerHTML = '';
+
+    const itemsPerPage = 3;
+    const totalPages = Math.ceil(this.data.length / itemsPerPage);
+
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+      const pageNumber = this.startPageNumber + pageIndex;
+      const startIndex = pageIndex * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, this.data.length);
+      const pageData = this.data.slice(startIndex, endIndex);
+
+      const pageElement = this.createPage(pageNumber, pageData);
+      container.appendChild(pageElement);
+    }
+
+    this.updateScale();
+    document.getElementById('export-png').disabled = false;
+  }
+
+  createPage(pageNumber, data) {
+    const page = document.createElement('div');
+    page.className = 'page';
+    page.setAttribute('data-page-num', pageNumber.toString().padStart(2, '0'));
+
+    // Identifier
+    const identifier = document.createElement('div');
+    identifier.className = 'identifier';
+    identifier.textContent = this.identifier;
+    page.appendChild(identifier);
+
+    // Boxes with data
+    for (let i = 0; i < 3; i++) {
+      const box = document.createElement('div');
+      box.className = 'box';
+      box.id = `box${i + 1}`;
+
+      if (data[i]) {
+        const content = this.createBoxContent(data[i]);
+        box.appendChild(content);
+      }
+
+      page.appendChild(box);
+    }
+
+    // Page number
+    const pageNum = document.createElement('div');
+    pageNum.className = 'page-number';
+    pageNum.textContent = pageNumber.toString().padStart(2, '0');
+    page.appendChild(pageNum);
+
+    return page;
+  }
+
+  createBoxContent(rowData) {
+    const content = document.createElement('div');
+    content.className = 'box-content';
+
+    // Create fields based on data columns
+    Object.entries(rowData).forEach(([key, value]) => {
+      if (value && value.toString().trim()) {
+        const field = document.createElement('div');
+        field.className = 'data-field';
+        field.innerHTML = `<span class="field-label">${key}:</span> ${value}`;
+        content.appendChild(field);
+      }
+    });
+
+    return content;
+  }
+
+  updatePageInfo() {
+    this.identifier = document.getElementById('identifier-input').value || 'DP-01';
+    this.startPageNumber = parseInt(document.getElementById('start-page-input').value) || 2;
+
+    const pages = document.querySelectorAll('.page');
+    pages.forEach((page, index) => {
+      const identifier = page.querySelector('.identifier');
+      const pageNumber = page.querySelector('.page-number');
+      const newPageNum = this.startPageNumber + index;
+
+      identifier.textContent = this.identifier;
+      pageNumber.textContent = newPageNum.toString().padStart(2, '0');
+      page.setAttribute('data-page-num', newPageNum.toString().padStart(2, '0'));
+    });
+  }
+
+  async exportToPNG() {
+    const pages = document.querySelectorAll('.page');
+    if (pages.length === 0) {
+      alert('没有页面可导出');
+      return;
+    }
+
+    const statusDiv = document.getElementById('export-status');
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = '正在导出...';
+
+    try {
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const pageNum = page.getAttribute('data-page-num');
+
+        statusDiv.textContent = `导出页面 ${i + 1}/${pages.length}...`;
+
+        // Reset transform for accurate capture
+        const originalTransform = page.style.transform;
+        page.style.transform = 'scale(1)';
+
+        const canvas = await html2canvas(page, {
+          width: 1230,
+          height: 1729,
+          scale: 2, // Higher quality
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff'
+        });
+
+        // Restore transform
+        page.style.transform = originalTransform;
+
+        // Download
+        const link = document.createElement('a');
+        link.download = `${this.identifier}-${pageNum}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        // Small delay between downloads
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      statusDiv.textContent = `成功导出 ${pages.length} 个页面！`;
+      setTimeout(() => {
+        statusDiv.style.display = 'none';
+      }, 3000);
+
+    } catch (error) {
+      statusDiv.textContent = '导出失败: ' + error.message;
+      console.error('Export error:', error);
+    }
+  }
+}
+
+// Initialize the application
+const layoutTool = new LayoutTool();
+</script>
+
+</body>
+</html>

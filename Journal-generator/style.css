@@ -9,7 +9,7 @@ body {
   font-family: 'FusionPixel', monospace;
   display: flex;
   align-items: flex-start;
-  background-color: #fff; /* ← 也同时改了背景色 */
+  background-color: #fff; /* ← 保持原来的背景色 */
 }
 
 .controls {
@@ -32,17 +32,32 @@ body {
   font-size: 14px;
 }
 
+.controls h3 {
+  margin: 8px 0 4px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.controls hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 8px 0;
+}
+
 .controls label {
   margin-bottom: 4px;
   font-weight: bold;
 }
 
 .controls input[type="range"],
-.controls input[type="text"] {
+.controls input[type="text"],
+.controls input[type="file"],
+.controls select {
   width: 100%;
   padding: 4px 6px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .controls button {
@@ -58,6 +73,55 @@ body {
   background-color: #333;
 }
 
+.controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.export-btn {
+  background-color: #28a745 !important;
+}
+
+.export-btn:hover {
+  background-color: #1e7e34 !important;
+}
+
+.encoding-options {
+  background: #f8f9fa;
+  padding: 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+.encoding-options button {
+  background-color: #ffc107;
+  color: #000;
+  margin-top: 4px;
+}
+
+.data-preview {
+  max-height: 120px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px;
+  background: #f9f9f9;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+#export-status {
+  font-size: 12px;
+  color: #666;
+  margin-top: 4px;
+}
+
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding-right: 260px; /* 为右侧控制面板留空间 */
+}
 
 .page {
   position: relative;
@@ -67,12 +131,12 @@ body {
   background-image: url('./assets/img/bkgd.png');
   background-size: cover;
   overflow: hidden;
-  top: 40px;   /* ← y轴偏移 */
-  left: 40px;  /* ← x轴偏移 */
+  top: 40px;   /* ← 保持原来的y轴偏移 */
+  left: 40px;  /* ← 保持原来的x轴偏移 */
   transform-origin: top left;
 }
 
-/* 编号 */
+/* 编号 - 保持原来的样式 */
 .identifier {
   position: absolute;
   top: 0;
@@ -86,20 +150,22 @@ body {
   font-family: 'FusionPixel', monospace;
 }
 
-/* Box */
+/* Box - 保持原来的样式和位置 */
 .box {
   width: 826px;
   height: 455px;
   position: absolute;
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px dashed rgba(255, 255, 255, 0.2);
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 #box1 { top: 275px; left: 332px; }
 #box2 { top: 741px; left: 332px; }
 #box3 { top: 1207px; left: 332px; }
 
-/* 页码 */
+/* 页码 - 保持原来的样式 */
 .page-number {
   position: absolute;
   top: 1565px;
@@ -111,4 +177,25 @@ body {
   line-height: 120px;
   color: rgba(221, 171, 156, 0.3);
   font-family: 'FusionPixel', monospace;
+}
+
+/* 新增：数据内容样式 */
+.box-content {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #fff;
+  font-family: 'FusionPixel', monospace;
+}
+
+.data-field {
+  margin-bottom: 6px;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  border-left: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.field-label {
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.8);
 }

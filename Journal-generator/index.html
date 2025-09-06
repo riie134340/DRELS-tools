@@ -7,8 +7,35 @@
 </head>
 <body>
 
-<!-- 顶部控制条 -->
+<!-- 控制面板 -->
 <div class="controls">
+  <h3>📊 数据导入</h3>
+
+  <label for="file-input">选择文件：</label>
+  <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+
+  <div class="encoding-options" id="encoding-options" style="display: none;">
+    <label for="encoding-select">CSV编码：</label>
+    <select id="encoding-select">
+      <option value="utf-8">UTF-8</option>
+      <option value="gbk">GBK (中文)</option>
+      <option value="big5">Big5 (繁体)</option>
+    </select>
+    <button id="reread-csv">重新读取</button>
+  </div>
+
+  <label for="sheets-url">Google Sheets URL：</label>
+  <input type="text" id="sheets-url" placeholder="粘贴链接...">
+  <button id="load-sheets">加载</button>
+
+  <div id="data-preview" class="data-preview" style="display: none;">
+    <div id="preview-content"></div>
+  </div>
+
+  <button id="generate-layout" disabled>生成排版</button>
+
+  <hr>
+
   <label for="scale-range">缩放：</label>
   <input type="range" id="scale-range" min="0.2" max="2" step="0.05" value="1">
 
@@ -19,6 +46,11 @@
   <input type="text" id="page-number-input" value="02">
 
   <button id="update-btn">更新</button>
+
+  <hr>
+
+  <button id="export-png" class="export-btn" disabled>导出PNG</button>
+  <div id="export-status" style="display: none;"></div>
 </div>
 
 <!-- 页面本体 -->
@@ -35,7 +67,9 @@
 </div>
 
 <!-- 引入脚本 -->
-<script src="./script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
