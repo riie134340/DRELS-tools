@@ -1,67 +1,53 @@
-// 原有的缩放和页面控制功能
-function fitPageToWindow() {
-  const page = document.querySelector('.page');
-  const container = document.querySelector('.page-wrapper');
+// ===== 统一缩放控制 =====
+const viewerEl = document.getElementById('viewer');     // .page-wrapper
+const pagesEl  = document.getElementById('pages');       // 多页容器
+const scaleInput = document.getElementById('scale-range');
 
-  if (!page) return;
-
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
-
-  const scaleX = windowWidth / page.offsetWidth;
-  const scaleY = windowHeight / page.offsetHeight;
-
-  const scale = Math.min(scaleX, scaleY, 1);
-
-  page.style.transform = `scale(${scale})`;
-  page.dataset.scale = scale;
+function setScale(v) {
+  viewerEl.style.setProperty('--scale', v);
+  if (scaleInput) scaleInput.value = String(v);
 }
 
-function setupZoomControl() {
-  const scaleInput = document.getElementById("scale-range");
-  const pages = document.querySelectorAll(".page");
+function getControlsWidth() {
+  const controls = document.querySelector('.controls');
+  return controls ? controls.offsetWidth : 0;
+}
 
-  scaleInput.addEventListener("input", () => {
-    const factor = scaleInput.value;
+function getFirstPageSize() {
+  const first = pagesEl?.querySelector('.page');
+  return first ? { w: first.offsetWidth, h: first.offsetHeight } : { w: 1230, h: 1729 };
+}
 
-    pages.forEach(page => {
-      const base = parseFloat(page.dataset.scale || 1);
-      const newScale = base * factor;
-      page.style.transform = `scale(${newScale})`;
-    });
+function computeAutoScale(isMulti) {
+  const { w: pageW, h: pageH } = getFirstPageSize();
+  const usableW = window.innerWidth - getControlsWidth() - 24 * 2;
+  const scaleByW = Math.max(Math.min(usableW / pageW, 1), 0.1);
+  if (!isMulti) {
+    const usableH = window.innerHeight - 24 * 2;
+    const scaleByH = Math.max(Math.min(usableH / pageH, 1), 0.1);
+    return Math.min(scaleByW, scaleByH);
+  }
+  return scaleByW;
+}
+
+function applyAutoScale() {
+  const isMulti = viewerEl.classList.contains('pdf-preview');
+  setScale(computeAutoScale(isMulti));
+}
+
+function setupUnifiedZoomControl() {
+  if (!scaleInput) return;
+  scaleInput.addEventListener('input', (e) => {
+    const v = parseFloat(e.target.value);
+    if (Number.isFinite(v)) setScale(v);
   });
 }
 
-// 多页面缩放控制
-function setupMultiPageZoom() {
-  const scaleInput = document.getElementById("scale-range");
-  const pages = document.querySelectorAll(".page");
-
-  // 为所有页面设置基础缩放数据
-  const windowWidth = window.innerWidth - 260; // 减去控制面板宽度
-  const windowHeight = window.innerHeight;
-
-  pages.forEach(page => {
-    const scaleX = windowWidth / page.offsetWidth;
-    const scaleY = windowHeight / page.offsetHeight;
-    const scale = Math.min(scaleX, scaleY, 1);
-    page.dataset.scale = scale;
-    page.style.transform = `scale(${scale})`;
-  });
-
-  // 重新绑定缩放控制
-  const newHandler = () => {
-    const factor = scaleInput.value;
-    pages.forEach(page => {
-      const base = parseFloat(page.dataset.scale || 1);
-      const newScale = base * factor;
-      page.style.transform = `scale(${newScale})`;
-    });
-  };
-
-  // 移除旧的事件监听器，添加新的
-  scaleInput.removeEventListener("input", newHandler);
-  scaleInput.addEventListener("input", newHandler);
+function setMode(isMulti) {
+  viewerEl.classList.toggle('pdf-preview', isMulti); // 多页模式
+  viewerEl.classList.toggle('single', !isMulti);      // 单页模式
+  viewerEl.querySelectorAll('.page').forEach(p => { p.style.transform = ''; p.dataset.scale = ''; });
+  applyAutoScale();
 }
 
 function setupControls() {
@@ -409,13 +395,28 @@ class LayoutGenerator {
       return;
     }
 
-    // 获取当前设置
+    // 读取当前设置
     this.identifier = document.getElementById('identifier-input').value || 'DP-01';
     this.startPageNumber = parseInt(document.getElementById('start-page-input').value) || 2;
 
-    const wrapper = document.querySelector('.page-wrapper');
-    wrapper.innerHTML = '';
+    const pagesContainer = document.getElementById('pages');
+    if (!pagesContainer) {
+      alert('找不到 #pages 容器');
+      return;
+    }
 
+    // 1) 取首屏模板（包含 .box 的结构）
+    const templatePage = pagesContainer.querySelector('.page');
+    if (!templatePage) {
+      alert('首屏模板 .page 不存在');
+      return;
+    }
+    const pageTemplate = templatePage.cloneNode(true); // 深度克隆
+
+    // 2) 清空容器（模板已在内存）
+    pagesContainer.innerHTML = '';
+
+    // 3) 每页 3 条数据
     const itemsPerPage = 3;
     const totalPages = Math.ceil(this.data.length / itemsPerPage);
 
@@ -425,18 +426,40 @@ class LayoutGenerator {
       const endIndex = Math.min(startIndex + itemsPerPage, this.data.length);
       const pageData = this.data.slice(startIndex, endIndex);
 
-      const pageElement = this.createPage(pageNumber, pageData);
-      wrapper.appendChild(pageElement);
+      const page = this.buildPageFromTemplate(pageTemplate, pageNumber, pageData);
+      pagesContainer.appendChild(page);
     }
 
-    // 切换到多页面缩放模式
-    setupMultiPageZoom();
-
-    // 标记为已生成
+    setMode(true);            // 切到多页
     this.isGenerated = true;
-
-    // 启用相关功能
     document.getElementById('export-png').disabled = false;
+  }
+
+  buildPageFromTemplate(template, pageNumber, pageData) {
+    const page = template.cloneNode(true);
+
+    // 避免重复 id
+    page.id = `page-${String(pageNumber).padStart(2, '0')}`;
+
+    // 标识符
+    const identifierEl = page.querySelector('.identifier');
+    if (identifierEl) identifierEl.textContent = this.identifier;
+
+    // 页码
+    const pageNumEl = page.querySelector('.page-number');
+    if (pageNumEl) pageNumEl.textContent = String(pageNumber).padStart(2, '0');
+
+    // 3 个 box
+    const boxes = page.querySelectorAll('.box');
+    boxes.forEach((box, i) => {
+      box.innerHTML = ''; // 清模板内容
+      box.innerHTML = '';
+      //box.id = `box${i + 1}-p${String(pageNumber).padStart(2, '0')}`; // 唯一 id
+      const row = pageData[i];
+      if (row) box.appendChild(this.createBoxContent(row));
+    });
+
+    return page;
   }
 
   createPage(pageNumber, data) {
@@ -621,12 +644,11 @@ class LayoutGenerator {
 
 // Initialize
 window.addEventListener('load', () => {
-  fitPageToWindow();
-  setupZoomControl();
-  setupControls();
+  setupUnifiedZoomControl();
+  applyAutoScale();
 
-  // 初始化排版工具
+  setupControls();
   new LayoutGenerator();
 });
 
-window.addEventListener('resize', fitPageToWindow);
+window.addEventListener('resize', applyAutoScale);
