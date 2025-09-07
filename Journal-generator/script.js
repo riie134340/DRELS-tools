@@ -331,34 +331,55 @@ class LayoutGenerator {
   }
 
   async loadGoogleSheets() {
-    const url = document.getElementById('sheets-url').value.trim();
-    if (!url) {
-      alert('请输入Google Sheets链接');
-      return;
-    }
+    const raw = document.getElementById('sheets-url').value.trim();
+    if (!raw) return alert('请输入 Google Sheets 链接');
 
     try {
-      let csvUrl;
-      if (url.includes('/edit')) {
-        csvUrl = url.replace('/edit#gid=', '/export?format=csv&gid=')
-                    .replace('/edit', '/export?format=csv');
-      } else {
-        csvUrl = url + '/export?format=csv';
+      const { id, gid, sheetName } = parseSheetsUrl(raw);
+      // 优先用 gid，若提供了 sheetName 则用 gviz by name
+      const csvUrl = sheetName
+      ? `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`
+      : `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+
+      const res = await fetch(csvUrl, { credentials: 'omit' });
+      if (!res.ok) throw new Error(`无法访问 CSV（${res.status}）`);
+
+      const text = await res.text();
+
+      // 如果拿到的是 HTML（多半是未公开或复制了 Drive 链接），给出提示
+      if (/<!doctype html>|<html/i.test(text)) {
+        throw new Error('返回的不是 CSV 内容，可能权限未公开，或链接不是 docs.google.com/spreadsheets。');
       }
 
-      const response = await fetch(csvUrl);
-      if (!response.ok) throw new Error('无法访问Google Sheets');
-
-      const csvText = await response.text();
-      const data = this.parseCSV(csvText);
-
+      const data = this.parseCSV(text);
       this.data = data;
       this.showDataPreview(data);
+
       document.getElementById('generate-layout').disabled = false;
       document.getElementById('encoding-options').style.display = 'none';
+    } catch (err) {
+      console.error(err);
+      alert(
+        '加载 Google Sheets 失败：' + err.message +
+        '\n\n请检查：\n1) 链接是否为 docs.google.com/spreadsheets/d/... \n2) 分享权限是否为“Anyone with the link（查看者）”\n3) 如需非首个工作表，请复制含 #gid=... 的链接或在链接末尾加 ?sheet=工作表名'
+      );
+    }
 
-    } catch (error) {
-      alert('加载Google Sheets失败: ' + error.message);
+    function parseSheetsUrl(input) {
+      // 允许用户随便粘贴，尽量宽松解析
+      const m = String(input).match(/https:\/\/docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      if (!m) throw new Error('不是有效的 Google Sheets 链接（需要 docs.google.com/spreadsheets/d/...）');
+      const id = m[1];
+
+      // 优先从 #gid= 里取，没有就用 0
+      const hashGid = String(input).match(/[#?&]gid=(\d+)/);
+      const gid = hashGid ? hashGid[1] : '0';
+
+      // 可选：支持在链接最后手动加 ?sheet=表名 来按表名导出
+      const sheetMatch = String(input).match(/[?&]sheet=([^&#]+)/i);
+      const sheetName = sheetMatch ? decodeURIComponent(sheetMatch[1]) : '';
+
+      return { id, gid, sheetName };
     }
   }
 
@@ -588,6 +609,16 @@ class LayoutGenerator {
       const mask = document.createElement('div');
       mask.className = 'event-mask';
       content.appendChild(mask);
+
+      // 判定等级（S/A/B/C）
+      const grade = (rowData['L'] || '').toUpperCase();
+      const validGrades = ['S', 'A', 'B', 'C'];
+      if (validGrades.includes(grade)) {
+        const stamp = document.createElement('img');
+        stamp.src = `./assets/img/stamp-${grade}.png`;
+        stamp.className = 'event-stamp';
+        content.appendChild(stamp);
+      }
     }
 
     return content;
@@ -611,34 +642,47 @@ class LayoutGenerator {
 
         statusDiv.textContent = `导出 ${i + 1}/${pages.length}...`;
 
-        const originalTransform = page.style.transform;
-        page.style.transform = 'scale(1)';
+        // 找到统一缩放的容器
+        const wrapper = page.closest('.page-wrapper') || document.getElementById('viewer');
 
-        const canvas = await html2canvas(page, {
-          width: 1230,
-          height: 1729,
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff'
-        });
+        // 读取原始 scale（优先 inline，其次 computed）
+        const inlineScale = wrapper?.style.getPropertyValue('--scale');
+        const computedScale = wrapper ? getComputedStyle(wrapper).getPropertyValue('--scale') : '1';
+        const originalScale = (inlineScale || computedScale || '1').trim();
 
-        page.style.transform = originalTransform;
+        try {
+          // 临时禁用统一缩放
+          if (wrapper) wrapper.style.setProperty('--scale', '1');
 
-        const link = document.createElement('a');
-        link.download = `${this.identifier}-${pageNum.toString().padStart(2, '0')}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+          const canvas = await html2canvas(page, {
+            width: 1230,
+            height: 1729,
+            scale: 2,            // 导出清晰度
+            useCORS: true,
+            backgroundColor: '#ffffff'
+          });
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+          const link = document.createElement('a');
+          link.download = `${this.identifier}-${String(pageNum).padStart(2, '0')}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        } finally {
+          // 恢复统一缩放
+          if (wrapper) wrapper.style.setProperty('--scale', originalScale || '1');
+        }
+
+        // 稍作间隔，避免阻塞 UI
+        await new Promise(r => setTimeout(r, 200));
       }
 
-      statusDiv.textContent = `导出完成！`;
-      setTimeout(() => statusDiv.style.display = 'none', 3000);
-
+      statusDiv.textContent = '导出完成！';
+      setTimeout(() => (statusDiv.style.display = 'none'), 3000);
     } catch (error) {
       statusDiv.textContent = '导出失败: ' + error.message;
       console.error('Export error:', error);
     }
+
+
   }
 }
 

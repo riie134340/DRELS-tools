@@ -3,6 +3,13 @@
   src: url('./assets/font/fusion-pixel/fusion-pixel-10px-monospaced-zh_hans.ttf.woff') format('woff');
 }
 
+@font-face {
+  font-family: 'ZhangHaiShanRX';
+  src: url('./assets/font/zhanghaishanrx.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -17,7 +24,7 @@ body {
   top: 0;
   right: 0;
   width: 220px;
-  height: 100vh;
+  height: 100dvh;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -34,6 +41,15 @@ body {
   /* 添加滚动支持 */
   overflow-y: auto;
   overflow-x: hidden;
+
+  box-sizing: border-box;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+.controls::after {
+  content: '';
+  display: block;
+  height: 56px;                                /* 足够让最后按钮完全滚出来 */
 }
 
 .controls h3 {
@@ -128,8 +144,9 @@ body {
 }
 
 .data-preview {
-  max-height: 100px;
+  max-height: 160px;
   overflow-y: auto;
+  white-space: pre-wrap;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 6px;
@@ -168,7 +185,7 @@ body {
 
 /* 多页面模式下的样式 */
 .page-wrapper.pdf-preview {
-  align-items: center;
+  align-items: flex-start;
   padding: 20px 280px 20px 20px;
   background-color: #f5f5f5;
 }
@@ -196,17 +213,16 @@ body {
 /* 页容器：多页垂直排列 + 居中 + 小间距（PDF 连页感） */
 .page-wrapper .pages {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: column;     /* 垂直堆叠 */
+  align-items: flex-start;    /* 左对齐 */
   gap: 8px;
+  box-sizing: border-box;
+  padding: 40px 0 0 40px;
 }
-
-/* 单页时保留你的偏移（可选） */
-.page-wrapper.single .page { top: 40px; left: 40px; }
 
 /* 多页时纸张观感（可选） */
 .page-wrapper.pdf-preview .page {
-  top: 0 !important; left: 0 !important; margin: 0;
+  margin: 0;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   border: 1px solid #ddd; border-radius: 4px;
 }
@@ -315,13 +331,13 @@ body {
   background-position: 0 0;
 }
 
-/* 图标样式：左上角（52,45），宽70，高53 */
+/* 图标样式：左上角（65,55），宽36，高36 */
 .event-icon {
   position: absolute;
-  left: 52px;
-  top: 45px;
-  width: 70px;
-  height: 53px;
+  left: 65px;
+  top: 55px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
 }
 
@@ -338,19 +354,19 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  font-size: 14px;
+  font-size: 26px;
 }
 
 /* 事件描述样式：左上角（82,131），宽650，高200 */
 .event-description {
   position: absolute;
-  left: 82px;
-  top: 131px;
+  left: 86px;
+  top: 120px;
   width: 650px;
   height: 200px;
-  font-family: 'FusionPixel', monospace;
+  font-family: 'ZhangHaiShanRX';
   color: rgb(169, 106, 87);
-  font-size: 14px;
+  font-size: 24px;
   line-height: 1.4;
   text-align: left;
   vertical-align: top;
@@ -368,11 +384,11 @@ body {
   height: 55px;
   font-family: 'FusionPixel', monospace;
   color: white;
-  text-align: right;
+  text-align: left;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  font-size: 14px;
+  font-size: 24px;
   z-index: 15;
 }
 
@@ -388,4 +404,16 @@ body {
   background-position: center;
   opacity: 0.6;
   z-index: 10;
+}
+
+.event-stamp {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 192px;     /* 可以调整大小 */
+  height: auto;
+  transform: translate(-50%, -50%); /* 完全居中 */
+  z-index: 20;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
 }
