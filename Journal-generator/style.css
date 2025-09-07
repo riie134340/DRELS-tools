@@ -162,6 +162,17 @@ body {
   flex-direction: column;
   gap: 40px;
   padding-right: 260px; /* 为右侧控制面板留空间 */
+  min-height: 100vh;
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+/* 多页面模式下的样式 */
+.page-wrapper.pdf-preview {
+  align-items: center;
+  padding: 20px 280px 20px 20px;
+  background-color: #fff;
+  gap: 20px;
 }
 
 .page {
@@ -172,9 +183,21 @@ body {
   background-image: url('./assets/img/bkgd.png');
   background-size: cover;
   overflow: hidden;
-  top: 40px;   /* 保持原来的y轴偏移 */
-  left: 40px;  /* 保持原来的x轴偏移 */
+  top: 40px;   /* 单页模式的偏移 */
+  left: 40px;  /* 单页模式的偏移 */
   transform-origin: top left;
+  transition: all 0.3s ease;
+}
+
+/* 多页面预览模式下的页面样式 */
+.page.pdf-style {
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transform-origin: center top;
 }
 
 /* 编号 - 保持原来的样式 */
