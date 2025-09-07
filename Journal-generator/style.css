@@ -171,7 +171,7 @@ body {
 .page-wrapper.pdf-preview {
   align-items: center;
   padding: 20px 280px 20px 20px;
-  background-color: #fff;
+  background-color: #f5f5f5;
   gap: 20px;
 }
 
@@ -291,4 +291,90 @@ body {
 .box-content::-webkit-scrollbar-thumb:hover,
 .data-preview::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.5);
+}
+
+/* 新增：事件内容样式 */
+.event-content {
+  position: relative;
+  width: 826px;
+  height: 455px;
+  background-image: url('./assets/img/event-box.png');
+  background-size: 826px 455px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+}
+
+/* 图标样式：左上角（52,45），宽70，高53 */
+.event-icon {
+  position: absolute;
+  left: 52px;
+  top: 45px;
+  width: 70px;
+  height: 53px;
+  object-fit: contain;
+}
+
+/* 地理位置样式：左上角（421,45），宽330，高53 */
+.event-location {
+  position: absolute;
+  left: 421px;
+  top: 45px;
+  width: 330px;
+  height: 53px;
+  font-family: 'FusionPixel', monospace;
+  color: white;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 14px;
+}
+
+/* 事件描述样式：左上角（82,131），宽650，高200 */
+.event-description {
+  position: absolute;
+  left: 82px;
+  top: 131px;
+  width: 650px;
+  height: 200px;
+  font-family: 'FusionPixel', monospace;
+  color: rgb(169, 106, 87);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  overflow: hidden;
+}
+
+/* 奖励样式：左上角（450,325），宽260，高55 */
+.event-reward {
+  position: absolute;
+  left: 450px;
+  top: 325px;
+  width: 260px;
+  height: 55px;
+  font-family: 'FusionPixel', monospace;
+  color: white;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 14px;
+  z-index: 15;
+}
+
+/* 遮罩样式 */
+.event-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('./assets/img/event-cover.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.6;
+  z-index: 10;
 }

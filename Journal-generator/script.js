@@ -197,6 +197,7 @@ class LayoutGenerator {
       document.getElementById('generate-layout').disabled = false;
     } catch (error) {
       alert('文件读取失败: ' + error.message);
+      console.error('文件读取错误:', error);
     }
   }
 
@@ -218,20 +219,36 @@ class LayoutGenerator {
             raw: false
           });
 
+          console.log('Excel原始数据:', jsonData);
+
           if (jsonData.length > 1) {
-            const headers = jsonData[0];
-            const rows = jsonData.slice(1).map(row => {
+            // 获取A1单元格的编号（如果存在）
+            const identifierFromA1 = jsonData[0][0]; // A1单元格
+            if (identifierFromA1 && identifierFromA1.trim()) {
+              // 更新编号输入框
+              document.getElementById('identifier-input').value = identifierFromA1.trim();
+              this.identifier = identifierFromA1.trim();
+            }
+
+            // 重要修复：只使用列索引，不使用表头名称
+            const rows = jsonData.slice(1).map((row, index) => {
               const obj = {};
-              headers.forEach((header, index) => {
-                obj[header] = row[index] || '';
+              // 只使用列字母索引
+              row.forEach((cell, colIndex) => {
+                const colLetter = String.fromCharCode(65 + colIndex); // A, B, C, D...
+                obj[colLetter] = cell || '';
               });
+              console.log(`第${index + 1}行数据:`, obj);
               return obj;
             });
+
+            console.log('处理后的数据:', rows);
             resolve(rows);
           } else {
             resolve([]);
           }
         } catch (error) {
+          console.error('Excel解析错误:', error);
           reject(error);
         }
       };
@@ -315,12 +332,13 @@ class LayoutGenerator {
       return result;
     };
 
-    const headers = parseCSVLine(lines[0]);
+    const firstLine = parseCSVLine(lines[0]);
     return lines.slice(1).map(line => {
       const values = parseCSVLine(line);
       const obj = {};
-      headers.forEach((header, index) => {
-        obj[header] = values[index] || '';
+      values.forEach((value, index) => {
+        const colLetter = String.fromCharCode(65 + index); // A, B, C, D...
+        obj[colLetter] = value || '';
       });
       return obj;
     });
@@ -377,8 +395,8 @@ class LayoutGenerator {
     const headers = Object.keys(data[0]);
     let html = `${data.length}行, 列: ${headers.join(', ')}<br>`;
 
-    data.slice(0, 2).forEach((row, index) => {
-      html += `${index + 1}: ${JSON.stringify(row).substring(0, 100)}...<br>`;
+    data.slice(0, 3).forEach((row, index) => {
+      html += `第${index + 1}行: A="${row.A}" B="${row.B}" C="${row.C}" D="${row.D}" E="${row.E}"<br>`;
     });
 
     content.innerHTML = html;
@@ -456,17 +474,98 @@ class LayoutGenerator {
   }
 
   createBoxContent(rowData) {
-    const content = document.createElement('div');
-    content.className = 'box-content';
+    console.log('createBoxContent 调用，rowData:', rowData);
 
-    Object.entries(rowData).forEach(([key, value]) => {
-      if (value && value.toString().trim()) {
-        const field = document.createElement('div');
-        field.className = 'data-field';
-        field.innerHTML = `<span class="field-label">${key}:</span> ${value}`;
-        content.appendChild(field);
-      }
+    const content = document.createElement('div');
+    content.className = 'event-content';
+
+    // 根据你提供的列信息，重新映射：
+    // A: #01（编号）
+    // B: 坐标
+    // C: 区域
+    // D: 事件内容
+    // E: 事件类别
+    // F: 物资
+    // G: 是否有后续剧情
+    // H: 事件结算
+    // I: 是否完成
+    // J: 行动点消耗
+    // K: 使用技能
+    // L: 判定等级
+
+    const coordinate = rowData['B'] || '';      // 坐标
+    const area = rowData['C'] || '';            // 区域
+    const description = rowData['D'] || '';     // 事件内容
+    const eventType = rowData['E'] || '';       // 事件类别
+    const reward = rowData['F'] || '';          // 物资
+    const isCompleted = rowData['I'] === '是' || rowData['I'] === 'true' || rowData['I'] === '完成' || rowData['I'] === '1';
+
+    console.log('提取的数据:', {
+      coordinate, area, description, eventType, reward, isCompleted
     });
+
+    // 图标类型映射表（6种图标类型）
+    const iconMapping = {
+      // 中文到英文的映射
+      '自然': 'nature',
+      '工程': 'engineering',
+      '体能': 'physical',
+      '社交': 'diplomacy',
+      '特殊': 'special',
+      '任意': 'wildcard',
+      // 英文保持原样
+      'nature': 'nature',
+      'engineering': 'engineering',
+      'physical': 'physical',
+      'diplomacy': 'diplomacy',
+      'special': 'special',
+      'wildcard': 'wildcard'
+    };
+
+    // 图标：使用CSS样式类
+    if (eventType) {
+      const icon = document.createElement('img');
+      icon.className = 'event-icon';
+
+      const mappedIconType = iconMapping[eventType] || eventType.toLowerCase();
+      icon.src = `./assets/img/task-${mappedIconType}.png`;
+
+      icon.onerror = () => {
+        console.warn(`图标文件不存在: task-${mappedIconType}.png`);
+        icon.style.display = 'none';
+      };
+
+      content.appendChild(icon);
+    }
+
+    // 地理位置：使用CSS样式类
+    if (coordinate || area) {
+      const location = document.createElement('div');
+      location.className = 'event-location';
+      location.textContent = `${coordinate}${area ? ' - ' + area : ''}`;
+      content.appendChild(location);
+    }
+
+    // 事件描述：使用CSS样式类
+    if (description) {
+      const desc = document.createElement('div');
+      desc.className = 'event-description';
+      desc.textContent = description;
+      content.appendChild(desc);
+    }
+
+    // 奖励：使用CSS样式类
+    const rewardDiv = document.createElement('div');
+    rewardDiv.className = 'event-reward';
+    rewardDiv.textContent = isCompleted ? `获得物资：${reward}` : '获得物资：？';
+    content.appendChild(rewardDiv);
+
+    // 如果已完成，添加遮罩
+    if (isCompleted) {
+      const mask = document.createElement('div');
+      mask.className = 'event-mask';
+      content.appendChild(mask);
+    }
 
     return content;
   }
