@@ -31,6 +31,9 @@ class DataProcessor:
         for char in text:
             hash_value = ((hash_value << 5) - hash_value) + ord(char)
             hash_value = hash_value & 0xFFFFFFFF  # 保持32位
+            # 确保结果为正数
+            if hash_value > 0x7FFFFFFF:
+                hash_value = hash_value - 0x100000000
         return str(abs(hash_value))
 
     def load_from_excel(self, file_path: str, name_column: str = None, status_column: str = None,

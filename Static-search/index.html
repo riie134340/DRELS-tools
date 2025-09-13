@@ -329,15 +329,16 @@
 
     <script>
         // 这里是加密的数据 - 在实际使用时会被data_processor.py生成的数据替换
-        const ENCRYPTED_DATA = {"hashes":{"934456360":{"status":"Occupied","aliases":["编年史作者","编年史学家"]},"722721981":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"编年史撰写者"},"722808228":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"编年史撰写者"},"2788793379":{"status":"Occupied","aliases":[]},"2514771609":{"status":"Occupied","aliases":["天然物化学家"]},"2514762314":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"天然物化学者"},"775706248":{"status":"Occupied","aliases":["執刀医","主刀医生"]},"22312818":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"手术医生"},"617488169":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"手术医生"},"20919488":{"status":"Occupied","aliases":["修验者","山伏"]},"20923239":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"修験者"},"753854":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"修験者"}},"fuzzy_map":{"722721981":["722808228"],"722808228":["722721981"],"22312818":["617488169"],"617488169":["22312818"],"20923239":["753854"],"753854":["20923239"]},"total_count":5};
+        const ENCRYPTED_DATA = {"hashes":{"934456360":{"status":"Occupied","aliases":["编年史作者","编年史学家"]},"722721981":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"编年史撰写者"},"722808228":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"编年史撰写者"},"1506173917":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"电气工程师"},"1780195687":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"天然物化学者"},"1780204982":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"天然物化学者"},"775706248":{"status":"Occupied","aliases":["執刀医","主刀医生"]},"22312818":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"手术医生"},"617488169":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"手术医生"},"20919488":{"status":"Occupied","aliases":["修验者","山伏"]},"20923239":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"修験者"},"753854":{"status":"Occupied","aliases":[],"is_alias":true,"main_name":"修験者"}},"fuzzy_map":{"722721981":["722808228"],"722808228":["722721981"],"1780195687":["1780204982"],"1780204982":["1780195687"],"22312818":["617488169"],"617488169":["22312818"],"20923239":["753854"],"753854":["20923239"]},"total_count":5};
 
         // 简单的字符串哈希函数（与Python版本保持一致）
         function simpleHash(str) {
+            str = str.toLowerCase().trim();
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // 转换为32位整数
+                hash = hash | 0; // 转换为32位有符号整数
             }
             return Math.abs(hash).toString();
         }

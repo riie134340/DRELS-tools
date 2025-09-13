@@ -343,11 +343,12 @@
 
         // 简单的字符串哈希函数（与Python版本保持一致）
         function simpleHash(str) {
+            str = str.toLowerCase().trim();
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash & hash; // 转换为32位整数
+                hash = hash | 0; // 转换为32位有符号整数
             }
             return Math.abs(hash).toString();
         }
