@@ -12,6 +12,8 @@ import argparse
 from typing import Dict, List, Tuple, Set
 import hashlib
 from difflib import SequenceMatcher
+from rapidfuzz import fuzz
+import jieba
 
 
 class DataProcessor:
@@ -37,7 +39,7 @@ class DataProcessor:
         return str(abs(hash_value))
 
     def load_from_excel(self, file_path: str, name_column: str = None, status_column: str = None,
-                        aliases_column: str = None):
+                        aliases_column: str = None, fuzzy_column: str = None):
         """从Excel文件加载数据"""
         try:
             # 读取Excel文件
@@ -60,7 +62,7 @@ class DataProcessor:
             print(f"  别称列：{aliases_column}")
 
             # 处理数据
-            self._process_dataframe(df, name_column, status_column, aliases_column)
+            self._process_dataframe(df, name_column, status_column, aliases_column, fuzzy_column)
 
         except Exception as e:
             print(f"读取Excel文件失败：{e}")
@@ -68,7 +70,7 @@ class DataProcessor:
         return True
 
     def load_from_google_sheets(self, sheet_url: str, name_column: str = None, status_column: str = None,
-                                aliases_column: str = None):
+                                aliases_column: str = None,  fuzzy_column: str = None):
         """从Google Sheets加载数据"""
         try:
             # 转换Google Sheets URL为CSV导出URL
@@ -98,7 +100,7 @@ class DataProcessor:
             print(f"  别称列：{aliases_column}")
 
             # 处理数据
-            self._process_dataframe(df, name_column, status_column, aliases_column)
+            self._process_dataframe(df, name_column, status_column, aliases_column, fuzzy_column)
 
         except Exception as e:
             print(f"读取Google Sheets失败：{e}")
@@ -136,7 +138,7 @@ class DataProcessor:
                 return col
         return None
 
-    def _process_dataframe(self, df: pd.DataFrame, name_column: str, status_column: str, aliases_column: str):
+    def _process_dataframe(self, df: pd.DataFrame, name_column: str, status_column: str, aliases_column: str, fuzzy_column: str):
         """处理DataFrame数据"""
         processed_count = 0
 
@@ -158,13 +160,28 @@ class DataProcessor:
                     # 支持多种分隔符
                     aliases = [alias.strip() for alias in re.split(r'[,，;；|/]', aliases_str) if alias.strip()]
 
+            # 获取模糊词
+            fuzzy_keywords = []
+            if fuzzy_column and pd.notna(row[fuzzy_column]):
+                fuzzy_str = str(row[fuzzy_column]).strip()
+                if fuzzy_str and fuzzy_str.lower() not in ['nan', 'none', '']:
+                    fuzzy_keywords = [kw.strip() for kw in re.split(r'[,，;；|/ ]', fuzzy_str) if kw.strip()]
+
             # 生成主要名称的哈希
             main_hash = self.simple_hash(name)
+            # 存 fuzzy 映射
+            for fuzzy_kw in fuzzy_keywords:
+                fuzzy_hash = self.simple_hash(fuzzy_kw)
+                if fuzzy_hash not in self.processed_data['fuzzy_map']:
+                    self.processed_data['fuzzy_map'][fuzzy_hash] = []
+                if main_hash not in self.processed_data['fuzzy_map'][fuzzy_hash]:
+                    self.processed_data['fuzzy_map'][fuzzy_hash].append(main_hash)
 
             # 存储数据
             self.processed_data['hashes'][main_hash] = {
                 'status': status,
-                'aliases': aliases
+                'aliases': aliases,
+                'main_name': name
             }
 
             # 存储反向映射（用于调试）
@@ -202,24 +219,31 @@ class DataProcessor:
             return 'Available'  # 默认为可用
 
     def _generate_fuzzy_mapping(self):
-        """生成模糊匹配映射"""
+        """生成模糊匹配映射，支持关键词搜索"""
         print("生成模糊匹配映射...")
         names = list(self.processed_data['reverse_map'].values())
 
-        for i, name1 in enumerate(names):
-            similar_names = []
-            for j, name2 in enumerate(names):
-                if i != j:
-                    # 使用SequenceMatcher计算相似度
-                    similarity = SequenceMatcher(None, name1.lower(), name2.lower()).ratio()
-                    if similarity > 0.6:  # 相似度阈值
-                        similar_names.append(name2)
+        for name1 in names:
+            # 原始名称（去掉别称标记）
+            base_name = name1.split('(')[0].strip()
+            name1_hash = self.simple_hash(base_name)
 
-            if similar_names:
-                name1_hash = self.simple_hash(name1.split('(')[0].strip())  # 移除别称标记
-                self.processed_data['fuzzy_map'][name1_hash] = [
-                    self.simple_hash(name.split('(')[0].strip()) for name in similar_names[:5]
-                ]
+            # 用 jieba 分词，比如 "手术医生" -> ["手术","医生"]
+            keywords = list(jieba.cut(base_name))
+            keywords.append(base_name)  # 全称也要算进去
+
+            for kw in keywords:
+                kw = kw.strip()
+                if not kw or len(kw) == 1:  # 可选：跳过单字
+                    continue
+
+                kw_hash = self.simple_hash(kw)
+
+                if kw_hash not in self.processed_data['fuzzy_map']:
+                    self.processed_data['fuzzy_map'][kw_hash] = []
+
+                if name1_hash not in self.processed_data['fuzzy_map'][kw_hash]:
+                    self.processed_data['fuzzy_map'][kw_hash].append(name1_hash)
 
     def generate_static_html(self, template_path: str, output_path: str):
         """生成包含数据的静态HTML文件"""
@@ -284,6 +308,7 @@ def main():
     parser.add_argument('--name-col', type=str, help='职业名称列名')
     parser.add_argument('--status-col', type=str, help='状态列名')
     parser.add_argument('--aliases-col', type=str, help='别称列名')
+    parser.add_argument('--fuzzy-col', type=str, help='模糊词列名')
 
     args = parser.parse_args()
 
@@ -295,10 +320,10 @@ def main():
 
     # 加载数据
     if args.excel:
-        if not processor.load_from_excel(args.excel, args.name_col, args.status_col, args.aliases_col):
+        if not processor.load_from_excel(args.excel, args.name_col, args.status_col, args.aliases_col, args.fuzzy_col):
             return
     elif args.sheets:
-        if not processor.load_from_google_sheets(args.sheets, args.name_col, args.status_col, args.aliases_col):
+        if not processor.load_from_google_sheets(args.sheets, args.name_col, args.status_col, args.aliases_col, args.fuzzy_col):
             return
 
     # 生成静态HTML

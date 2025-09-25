@@ -473,10 +473,18 @@
 
             // 模糊匹配
             const suggestions = [];
-            for (const [hash, data] of Object.entries(ENCRYPTED_DATA.hashes)) {
-                // 这里需要反向匹配，但由于数据已加密，我们使用预计算的模糊映射
-                // 在实际实现中，data_processor.py会生成模糊匹配的映射关系
+            if (ENCRYPTED_DATA.fuzzy_map[queryHash]) {
+                for (const relatedHash of ENCRYPTED_DATA.fuzzy_map[queryHash]) {
+                    const data = ENCRYPTED_DATA.hashes[relatedHash];
+                    if (data) {
+                        let displayName = data.main_name || query; // 优先用 main_name
+                        if (!suggestions.includes(displayName)) {
+                            suggestions.push(displayName);
+                        }
+                    }
+                }
             }
+
 
             // 如果有建议
             if (suggestions.length > 0) {
