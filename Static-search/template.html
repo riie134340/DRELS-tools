@@ -319,10 +319,9 @@
             <div class="usage-tips">
                 <h3>使用说明</h3>
                 <ul>
-                    <li>输入完整的才能称号可直接查询状态</li>
-                    <li>支持关键词搜索和模糊匹配</li>
-                    <li>模糊匹配表示系统找到相似或相关的称号作参考，并不代表该称号已被占用</li>
-                    <li>若有疑问，请联系企划组</li>
+                    <li>输入完整的才能称号可查询状态，支持关键词搜索和模糊匹配</li>
+                    <li>模糊匹配将会提供已录入的相似称号名称作为参考，不代表该称号已被占用</li>
+                    <li>任何疑问欢迎联系企划组</li>
                 </ul>
             </div>
         </div>
@@ -461,10 +460,10 @@
             // 1. 精确匹配
             if (ENCRYPTED_DATA.hashes[queryHash]) {
                 const data = ENCRYPTED_DATA.hashes[queryHash];
-                console.log('找到精确匹配:', data);
+                const displayName = data.is_alias ? data.main_name : query;
                 return {
                     success: true,
-                    message: `找到职业才能：${query}`,
+                    message: `找到职业才能：${displayName}`,
                     data: {
                         match_type: 'exact',
                         status: data.status,
