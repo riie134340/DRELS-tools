@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-职业才能数据预处理工具
+职业才能数据预处理工具 - 修复模糊匹配版本
 用于将Excel文件或Google Sheets转换为静态网页可用的加密数据
 """
 
@@ -31,11 +31,10 @@ class DataProcessor:
         text = str(text).lower().strip()
         hash_value = 0
         for char in text:
-            hash_value = ((hash_value << 5) - hash_value) + ord(char)
-            hash_value = hash_value & 0xFFFFFFFF  # 保持32位
-            # 确保结果为正数
-            if hash_value > 0x7FFFFFFF:
-                hash_value = hash_value - 0x100000000
+            char_code = ord(char)
+            hash_value = ((hash_value << 5) - hash_value) + char_code
+            # 确保结果在32位有符号整数范围内
+            hash_value = ((hash_value + 0x80000000) % 0x100000000) - 0x80000000
         return str(abs(hash_value))
 
     def load_from_excel(self, file_path: str, name_column: str = None, status_column: str = None,
@@ -55,11 +54,14 @@ class DataProcessor:
                 status_column = self._detect_status_column(df.columns)
             if not aliases_column:
                 aliases_column = self._detect_aliases_column(df.columns)
+            if not fuzzy_column:
+                fuzzy_column = self._detect_fuzzy_column(df.columns)
 
             print(f"使用列映射：")
             print(f"  职业名称列：{name_column}")
             print(f"  状态列：{status_column}")
             print(f"  别称列：{aliases_column}")
+            print(f"  模糊词列：{fuzzy_column}")
 
             # 处理数据
             self._process_dataframe(df, name_column, status_column, aliases_column, fuzzy_column)
@@ -70,7 +72,7 @@ class DataProcessor:
         return True
 
     def load_from_google_sheets(self, sheet_url: str, name_column: str = None, status_column: str = None,
-                                aliases_column: str = None,  fuzzy_column: str = None):
+                                aliases_column: str = None, fuzzy_column: str = None):
         """从Google Sheets加载数据"""
         try:
             # 转换Google Sheets URL为CSV导出URL
@@ -93,11 +95,14 @@ class DataProcessor:
                 status_column = self._detect_status_column(df.columns)
             if not aliases_column:
                 aliases_column = self._detect_aliases_column(df.columns)
+            if not fuzzy_column:
+                fuzzy_column = self._detect_fuzzy_column(df.columns)
 
             print(f"使用列映射：")
             print(f"  职业名称列：{name_column}")
             print(f"  状态列：{status_column}")
             print(f"  别称列：{aliases_column}")
+            print(f"  模糊词列：{fuzzy_column}")
 
             # 处理数据
             self._process_dataframe(df, name_column, status_column, aliases_column, fuzzy_column)
@@ -138,7 +143,17 @@ class DataProcessor:
                 return col
         return None
 
-    def _process_dataframe(self, df: pd.DataFrame, name_column: str, status_column: str, aliases_column: str, fuzzy_column: str):
+    def _detect_fuzzy_column(self, columns) -> str:
+        """自动检测模糊词列"""
+        fuzzy_keywords = ['模糊词', '模糊', 'fuzzy', '关键词', 'keyword', 'keywords', '标签', 'tag', 'tags']
+        for col in columns:
+            col_lower = str(col).lower()
+            if any(keyword in col_lower for keyword in fuzzy_keywords):
+                return col
+        return None
+
+    def _process_dataframe(self, df: pd.DataFrame, name_column: str, status_column: str, aliases_column: str,
+                           fuzzy_column: str):
         """处理DataFrame数据"""
         processed_count = 0
 
@@ -165,17 +180,10 @@ class DataProcessor:
             if fuzzy_column and pd.notna(row[fuzzy_column]):
                 fuzzy_str = str(row[fuzzy_column]).strip()
                 if fuzzy_str and fuzzy_str.lower() not in ['nan', 'none', '']:
-                    fuzzy_keywords = [kw.strip() for kw in re.split(r'[,，;；|/ ]', fuzzy_str) if kw.strip()]
+                    fuzzy_keywords = [kw.strip() for kw in re.split(r'[,，;；|/\s]', fuzzy_str) if kw.strip()]
 
             # 生成主要名称的哈希
             main_hash = self.simple_hash(name)
-            # 存 fuzzy 映射
-            for fuzzy_kw in fuzzy_keywords:
-                fuzzy_hash = self.simple_hash(fuzzy_kw)
-                if fuzzy_hash not in self.processed_data['fuzzy_map']:
-                    self.processed_data['fuzzy_map'][fuzzy_hash] = []
-                if main_hash not in self.processed_data['fuzzy_map'][fuzzy_hash]:
-                    self.processed_data['fuzzy_map'][fuzzy_hash].append(main_hash)
 
             # 存储数据
             self.processed_data['hashes'][main_hash] = {
@@ -198,13 +206,23 @@ class DataProcessor:
                 }
                 self.processed_data['reverse_map'][alias_hash] = f"{alias} (别称: {name})"
 
+            # 重要：处理模糊词映射，确保正确建立映射关系
+            print(f"处理 '{name}' 的模糊词: {fuzzy_keywords}")
+            for fuzzy_kw in fuzzy_keywords:
+                fuzzy_hash = self.simple_hash(fuzzy_kw)
+                if fuzzy_hash not in self.processed_data['fuzzy_map']:
+                    self.processed_data['fuzzy_map'][fuzzy_hash] = []
+                if main_hash not in self.processed_data['fuzzy_map'][fuzzy_hash]:
+                    self.processed_data['fuzzy_map'][fuzzy_hash].append(main_hash)
+                    print(f"  添加映射: '{fuzzy_kw}' (hash:{fuzzy_hash}) -> '{name}' (hash:{main_hash})")
+
             processed_count += 1
 
         self.processed_data['total_count'] = processed_count
         print(f"成功处理 {processed_count} 条记录")
 
-        # 生成模糊匹配映射
-        self._generate_fuzzy_mapping()
+        # 生成额外的智能模糊匹配映射
+        self._generate_smart_fuzzy_mapping()
 
     def _normalize_status(self, status: str) -> str:
         """标准化状态值"""
@@ -218,32 +236,75 @@ class DataProcessor:
         else:
             return 'Available'  # 默认为可用
 
-    def _generate_fuzzy_mapping(self):
-        """生成模糊匹配映射，支持关键词搜索"""
-        print("生成模糊匹配映射...")
-        names = list(self.processed_data['reverse_map'].values())
+    def _generate_smart_fuzzy_mapping(self):
+        """生成智能模糊匹配映射"""
+        print("生成智能模糊匹配映射...")
 
-        for name1 in names:
-            # 原始名称（去掉别称标记）
-            base_name = name1.split('(')[0].strip()
-            name1_hash = self.simple_hash(base_name)
+        # 获取所有主要名称
+        main_names = []
+        for hash_key, data in self.processed_data['hashes'].items():
+            if not data.get('is_alias', False):  # 只处理主要名称，不处理别称
+                main_names.append((hash_key, data['main_name']))
 
-            # 用 jieba 分词，比如 "手术医生" -> ["手术","医生"]
-            keywords = list(jieba.cut(base_name))
-            keywords.append(base_name)  # 全称也要算进去
+        print(f"处理 {len(main_names)} 个主要名称")
 
-            for kw in keywords:
-                kw = kw.strip()
-                if not kw or len(kw) == 1:  # 可选：跳过单字
-                    continue
+        for main_hash, main_name in main_names:
+            print(f"为 '{main_name}' 生成模糊映射")
 
-                kw_hash = self.simple_hash(kw)
+            # 1. 添加完整名称本身
+            name_hash = self.simple_hash(main_name)
+            self._add_to_fuzzy_map(name_hash, main_hash, f"完整名称: {main_name}")
 
-                if kw_hash not in self.processed_data['fuzzy_map']:
-                    self.processed_data['fuzzy_map'][kw_hash] = []
+            # 2. 使用 jieba 分词生成关键词
+            try:
+                keywords = list(jieba.cut(main_name))
+                print(f"  jieba分词结果: {keywords}")
 
-                if name1_hash not in self.processed_data['fuzzy_map'][kw_hash]:
-                    self.processed_data['fuzzy_map'][kw_hash].append(name1_hash)
+                for keyword in keywords:
+                    keyword = keyword.strip()
+                    # 跳过单字符、空白和标点，但保留有意义的词
+                    if len(keyword) <= 1 or not keyword or keyword.isspace():
+                        continue
+                    # 跳过纯标点符号
+                    if all(not c.isalnum() for c in keyword):
+                        continue
+
+                    keyword_hash = self.simple_hash(keyword)
+                    self._add_to_fuzzy_map(keyword_hash, main_hash, f"关键词: {keyword} -> {main_name}")
+
+            except Exception as e:
+                print(f"  jieba分词失败: {e}")
+
+            # 3. 生成部分匹配（前缀匹配）
+            if len(main_name) >= 2:
+                for i in range(2, min(len(main_name) + 1, 5)):  # 2-4个字符的前缀
+                    prefix = main_name[:i]
+                    prefix_hash = self.simple_hash(prefix)
+                    self._add_to_fuzzy_map(prefix_hash, main_hash, f"前缀: {prefix} -> {main_name}")
+
+        print(f"生成了 {len(self.processed_data['fuzzy_map'])} 个模糊匹配映射")
+
+        # 调试：打印部分映射
+        print("部分模糊映射示例:")
+        for i, (fuzzy_hash, main_hashes) in enumerate(self.processed_data['fuzzy_map'].items()):
+            if i >= 10:  # 只显示前10个
+                break
+            # 尝试找到对应的关键词
+            keyword = None
+            for hash_key, name in self.processed_data['reverse_map'].items():
+                if self.simple_hash(name.split('(')[0].strip()) == int(fuzzy_hash):
+                    keyword = name.split('(')[0].strip()
+                    break
+            print(
+                f"  {fuzzy_hash} ({keyword}) -> {[self.processed_data['reverse_map'].get(h, 'unknown') for h in main_hashes]}")
+
+    def _add_to_fuzzy_map(self, fuzzy_hash, main_hash, debug_info):
+        """添加到模糊映射，避免重复"""
+        if fuzzy_hash not in self.processed_data['fuzzy_map']:
+            self.processed_data['fuzzy_map'][fuzzy_hash] = []
+        if main_hash not in self.processed_data['fuzzy_map'][fuzzy_hash]:
+            self.processed_data['fuzzy_map'][fuzzy_hash].append(main_hash)
+            print(f"    {debug_info}")
 
     def generate_static_html(self, template_path: str, output_path: str):
         """生成包含数据的静态HTML文件"""
@@ -286,9 +347,21 @@ class DataProcessor:
         """保存调试信息（包含原始名称映射）"""
         debug_data = {
             'reverse_map': self.processed_data['reverse_map'],
+            'fuzzy_map_sample': dict(list(self.processed_data['fuzzy_map'].items())[:20]),
             'total_count': self.processed_data['total_count'],
-            'sample_hashes': {k: v for k, v in list(self.processed_data['hashes'].items())[:5]}
+            'sample_hashes': {k: v for k, v in list(self.processed_data['hashes'].items())[:10]},
+            'fuzzy_map_stats': {
+                'total_fuzzy_entries': len(self.processed_data['fuzzy_map']),
+                'sample_mappings': []
+            }
         }
+
+        # 添加一些具体的映射示例用于调试
+        for fuzzy_hash, main_hashes in list(self.processed_data['fuzzy_map'].items())[:10]:
+            debug_data['fuzzy_map_stats']['sample_mappings'].append({
+                'fuzzy_hash': fuzzy_hash,
+                'mapped_to': [self.processed_data['reverse_map'].get(h, 'unknown') for h in main_hashes]
+            })
 
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
@@ -323,7 +396,8 @@ def main():
         if not processor.load_from_excel(args.excel, args.name_col, args.status_col, args.aliases_col, args.fuzzy_col):
             return
     elif args.sheets:
-        if not processor.load_from_google_sheets(args.sheets, args.name_col, args.status_col, args.aliases_col, args.fuzzy_col):
+        if not processor.load_from_google_sheets(args.sheets, args.name_col, args.status_col, args.aliases_col,
+                                                 args.fuzzy_col):
             return
 
     # 生成静态HTML

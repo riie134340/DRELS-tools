@@ -294,7 +294,7 @@
     <div class="container">
         <header>
             <h1>才能查询系统</h1>
-            <p>快速查询才能称号的可用状态，DRELS企划用</p>
+            <p>快速查询才能称号的可用状态，DRELS专用</p>
         </header>
 
         <div class="search-section">
@@ -320,8 +320,8 @@
                 <h3>使用说明</h3>
                 <ul>
                     <li>输入完整才能名称进行查询</li>
+                    <li>支持关键词搜索和模糊匹配</li>
                     <li>绿色表示可用，橙色表示保留，红色表示已占用</li>
-                    <li>系统暂不支持模糊匹配（开发中）</li>
                 </ul>
             </div>
         </div>
@@ -348,25 +348,17 @@
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                hash = hash | 0; // 转换为32位有符号整数
+                // 确保结果在32位有符号整数范围内，与Python保持一致
+                hash = ((hash + 0x80000000) % 0x100000000) - 0x80000000;
             }
             return Math.abs(hash).toString();
         }
 
-        // 模糊匹配函数
-        function fuzzyMatch(query, target) {
-            query = query.toLowerCase();
-            target = target.toLowerCase();
+        // 计算字符串相似度（用于额外的模糊匹配）
+        function calculateSimilarity(a, b) {
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
 
-            if (target.includes(query)) return true;
-
-            // 简单的编辑距离计算
-            const maxDistance = Math.floor(query.length / 3);
-            return editDistance(query, target) <= maxDistance;
-        }
-
-        // 编辑距离计算
-        function editDistance(a, b) {
             const matrix = [];
             for (let i = 0; i <= b.length; i++) {
                 matrix[i] = [i];
@@ -374,6 +366,7 @@
             for (let j = 0; j <= a.length; j++) {
                 matrix[0][j] = j;
             }
+
             for (let i = 1; i <= b.length; i++) {
                 for (let j = 1; j <= a.length; j++) {
                     if (b.charAt(i - 1) === a.charAt(j - 1)) {
@@ -387,7 +380,10 @@
                     }
                 }
             }
-            return matrix[b.length][a.length];
+
+            const distance = matrix[b.length][a.length];
+            const maxLen = Math.max(a.length, b.length);
+            return (maxLen - distance) / maxLen;
         }
 
         // 获取状态的中文描述
@@ -449,16 +445,22 @@
                 } else {
                     showErrorResult(result);
                 }
-            }, 500);
+            }, 300);
         }
 
         // 在数据中搜索
         function searchInData(query) {
-            const queryHash = simpleHash(query.toLowerCase().trim());
+            const queryLower = query.toLowerCase().trim();
+            const queryHash = simpleHash(queryLower);
 
-            // 精确匹配
+            console.log(`搜索: "${query}" (hash: ${queryHash})`);
+            console.log('fuzzy_map中的所有键:', Object.keys(ENCRYPTED_DATA.fuzzy_map));
+            console.log('是否存在该键:', ENCRYPTED_DATA.fuzzy_map.hasOwnProperty(queryHash));
+
+            // 1. 精确匹配
             if (ENCRYPTED_DATA.hashes[queryHash]) {
                 const data = ENCRYPTED_DATA.hashes[queryHash];
+                console.log('找到精确匹配:', data);
                 return {
                     success: true,
                     message: `找到职业才能：${query}`,
@@ -466,32 +468,105 @@
                         match_type: 'exact',
                         status: data.status,
                         chinese_status: getChineseStatus(data.status),
-                        has_aliases: data.aliases && data.aliases.length > 0
+                        has_aliases: data.aliases && data.aliases.length > 0,
+                        main_name: data.main_name || query
                     }
                 };
             }
 
-            // 模糊匹配
-            const suggestions = [];
+            // 2. 模糊匹配（使用fuzzy_map）
+            const fuzzyMatches = [];
+            console.log('检查模糊匹配...');
+
             if (ENCRYPTED_DATA.fuzzy_map[queryHash]) {
+                console.log(`找到模糊映射: ${queryHash} -> ${ENCRYPTED_DATA.fuzzy_map[queryHash]}`);
                 for (const relatedHash of ENCRYPTED_DATA.fuzzy_map[queryHash]) {
                     const data = ENCRYPTED_DATA.hashes[relatedHash];
-                    if (data) {
-                        let displayName = data.main_name || query; // 优先用 main_name
-                        if (!suggestions.includes(displayName)) {
-                            suggestions.push(displayName);
-                        }
+                    if (data && !data.is_alias) {
+                        fuzzyMatches.push({
+                            name: data.main_name,
+                            score: 0.9,
+                            type: 'fuzzy'
+                        });
+                        console.log(`添加模糊匹配: ${data.main_name}`);
+                    }
+                }
+            } else {
+                console.log(`未找到哈希 ${queryHash} 在 fuzzy_map 中`);
+                // 调试：列出相似的哈希值
+                const similarHashes = Object.keys(ENCRYPTED_DATA.fuzzy_map).filter(h =>
+                    Math.abs(parseInt(h) - parseInt(queryHash)) < 1000000
+                );
+                if (similarHashes.length > 0) {
+                    console.log('相近的哈希值:', similarHashes);
+                }
+            }
+
+            // 3. 关键词部分匹配
+            console.log('进行关键词搜索...');
+            const partialMatches = [];
+
+            for (const [hash, data] of Object.entries(ENCRYPTED_DATA.hashes)) {
+                if (data.is_alias) continue;
+
+                const name = data.main_name;
+                const nameLower = name.toLowerCase();
+
+                // 检查是否包含查询词
+                if (nameLower.includes(queryLower) || queryLower.includes(nameLower)) {
+                    // 避免重复
+                    if (!fuzzyMatches.find(m => m.name === name)) {
+                        partialMatches.push({
+                            name: name,
+                            score: 0.8,
+                            type: 'partial'
+                        });
+                        console.log(`添加部分匹配: ${name}`);
                     }
                 }
             }
 
+            // 4. 相似度匹配
+            console.log('进行相似度匹配...');
+            const similarMatches = [];
 
-            // 如果有建议
-            if (suggestions.length > 0) {
+            for (const [hash, data] of Object.entries(ENCRYPTED_DATA.hashes)) {
+                if (data.is_alias) continue;
+
+                const name = data.main_name;
+                const similarity = calculateSimilarity(queryLower, name.toLowerCase());
+
+                if (similarity >= 0.6) {
+                    // 避免重复
+                    const alreadyMatched = fuzzyMatches.find(m => m.name === name) ||
+                                         partialMatches.find(m => m.name === name);
+                    if (!alreadyMatched) {
+                        similarMatches.push({
+                            name: name,
+                            score: similarity,
+                            type: 'similar'
+                        });
+                        console.log(`添加相似匹配: ${name} (相似度: ${similarity.toFixed(2)})`);
+                    }
+                }
+            }
+
+            // 合并所有匹配结果
+            let allMatches = [...fuzzyMatches, ...partialMatches, ...similarMatches];
+
+            // 按分数排序
+            allMatches.sort((a, b) => b.score - a.score);
+
+            // 限制结果数量
+            allMatches = allMatches.slice(0, 8);
+
+            console.log(`总共找到 ${allMatches.length} 个匹配结果`);
+
+            if (allMatches.length > 0) {
                 return {
                     success: false,
                     message: `未找到"${query}"的精确匹配`,
-                    suggestions: suggestions.slice(0, 5) // 最多显示5个建议
+                    suggestions: allMatches
                 };
             }
 
@@ -537,7 +612,7 @@
                         <h4>您可能想查询：</h4>
                         <div class="suggestion-list">
                             ${data.suggestions.map(suggestion =>
-                                `<span class="suggestion-item" onclick="searchSuggestion('${suggestion}')">${suggestion}</span>`
+                                `<span class="suggestion-item" onclick="searchSuggestion('${suggestion.name}')">${suggestion.name}</span>`
                             ).join('')}
                         </div>
                     </div>
@@ -604,6 +679,9 @@
                     hideResult();
                 }
             });
+
+            // 自动聚焦搜索框
+            searchInput.focus();
         });
     </script>
 </body>
