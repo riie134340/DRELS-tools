@@ -1,3 +1,5 @@
+# python build.py --debug
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -80,7 +82,7 @@ def main():
     print()
 
     # 创建处理器并加载数据
-    processor = DataProcessor()
+    processor = DataProcessor(debug=args.debug)
 
     print("🔄 正在加载数据...")
     if source_type == 'excel':
@@ -121,11 +123,6 @@ def main():
     print(f"1. 在浏览器中打开 {args.output} 测试功能")
     print("2. 将文件上传到GitHub Pages或其他静态托管服务")
     print("3. 如需更新数据，重新运行此脚本即可")
-    print()
-    print("💡 提示：")
-    print("- 生成的网页是完全静态的，无需服务器")
-    print("- 原始数据已加密，用户无法直接查看")
-    print("- 支持精确匹配、模糊匹配和别称识别")
 
     return 0
 

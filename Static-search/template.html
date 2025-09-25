@@ -319,9 +319,10 @@
             <div class="usage-tips">
                 <h3>使用说明</h3>
                 <ul>
-                    <li>输入完整才能名称进行查询</li>
+                    <li>输入完整的才能称号可直接查询状态</li>
                     <li>支持关键词搜索和模糊匹配</li>
-                    <li>绿色表示可用，橙色表示保留，红色表示已占用</li>
+                    <li>模糊匹配表示系统找到相似或相关的称号作参考，并不代表该称号已被占用</li>
+                    <li>若有疑问，请联系企划组</li>
                 </ul>
             </div>
         </div>
@@ -343,12 +344,12 @@
 
         // 简单的字符串哈希函数（与Python版本保持一致）
         function simpleHash(str) {
-            str = str.toLowerCase().trim();
+            // 统一大小写、去空格、Unicode 归一化（NFKC）
+            str = str.normalize("NFKC").toLowerCase().trim();
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
-                // 确保结果在32位有符号整数范围内，与Python保持一致
                 hash = ((hash + 0x80000000) % 0x100000000) - 0x80000000;
             }
             return Math.abs(hash).toString();
@@ -386,12 +387,12 @@
             return (maxLen - distance) / maxLen;
         }
 
-        // 获取状态的中文描述
+        // 获取状态
         function getChineseStatus(status) {
             const statusMap = {
-                'Available': '可用',
-                'Occupied': '已占用',
-                'Hold': '保留中'
+                'Available': 'Available',
+                'Occupied': 'Occupied',
+                'Hold': 'Hold'
             };
             return statusMap[status] || '未知';
         }
@@ -450,8 +451,8 @@
 
         // 在数据中搜索
         function searchInData(query) {
-            const queryLower = query.toLowerCase().trim();
-            const queryHash = simpleHash(queryLower);
+            const queryHash = simpleHash(query); // 交给 simpleHash 做全部清理
+            const queryLower = query.normalize("NFKC").toLowerCase().trim(); // 仅供字符串包含匹配用
 
             console.log(`搜索: "${query}" (hash: ${queryHash})`);
             console.log('fuzzy_map中的所有键:', Object.keys(ENCRYPTED_DATA.fuzzy_map));
