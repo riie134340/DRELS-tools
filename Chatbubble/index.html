@@ -470,7 +470,7 @@
 
                 const position = String(row[0]).trim().toLowerCase();
                 const name = String(row[1]).trim();
-                const text = String(row[2]).trim();
+                const text = String(row[2]).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
                 const avatarUrl = row[3] ? String(row[3]).trim() : null;
                 const bubbleColor = row[4] ? String(row[4]).trim() : null;
 
@@ -627,25 +627,33 @@
             previewArea.innerHTML = `<img src="${currentImageData}" class="preview-image" alt="预览">`;
         }
 
-        // 文本换行
+        // 文本换行：先按 \n 强制分段，再对每段做宽度换行；保留空行
         function wrapText(text, maxWidth) {
-            const lines = [];
-            let currentLine = '';
+            const outLines = [];
+            const paragraphs = String(text).split('\n'); // 支持手动换行
 
-            for (let char of text) {
-                const testLine = currentLine + char;
-                const width = ctx.measureText(testLine).width;
-
-                if (width <= maxWidth) {
-                    currentLine = testLine;
-                } else {
-                    if (currentLine) lines.push(currentLine);
-                    currentLine = char;
+            for (const para of paragraphs) {
+                // 空段落（即连续 \n）也要保留一条空行
+                if (para.length === 0) {
+                    outLines.push('');
+                    continue;
                 }
+
+                let current = '';
+                for (const ch of para) {
+                    const test = current + ch;
+                    const w = ctx.measureText(test).width;
+                    if (w <= maxWidth) {
+                        current = test;
+                    } else {
+                        if (current) outLines.push(current);
+                        current = ch; // 从新字符开始新行
+                    }
+                }
+                if (current) outLines.push(current);
             }
 
-            if (currentLine) lines.push(currentLine);
-            return lines.length > 0 ? lines : [text];
+            return outLines.length ? outLines : [text];
         }
 
         // 绘制圆角矩形
