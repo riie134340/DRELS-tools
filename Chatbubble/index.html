@@ -7,15 +7,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #d1d3c066 0%, #e7fa64 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -27,12 +23,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
-
-        @media (max-width: 968px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-        }
+        @media (max-width: 968px) { .container { grid-template-columns: 1fr; } }
 
         .panel {
             background: white;
@@ -41,35 +32,21 @@
             padding: 30px;
         }
 
-        h1 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 24px;
-        }
+        h1 { color: #333; margin-bottom: 20px; font-size: 24px; }
 
         .info-box {
             background: #f8f9fa;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #d8ea66;
             padding: 15px;
             margin-bottom: 20px;
             border-radius: 5px;
             font-size: 13px;
         }
-
-        .info-box h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .info-box ul {
-            margin-left: 20px;
-            color: #666;
-            line-height: 1.6;
-        }
+        .info-box h3 { margin-bottom: 10px; font-size: 14px; }
+        .info-box ul { margin-left: 20px; color: #666; line-height: 1.6; }
 
         .upload-area {
-            border: 2px dashed #667eea;
+            border: 2px dashed #d8ea66;
             border-radius: 10px;
             padding: 30px;
             text-align: center;
@@ -77,181 +54,60 @@
             transition: all 0.3s;
             margin-bottom: 15px;
         }
-
-        .upload-area:hover {
-            background: #f8f9fa;
-            border-color: #764ba2;
-        }
-
-        .upload-area.dragover {
-            background: #e3f2fd;
-            border-color: #2196f3;
-        }
-
-        .upload-area input[type="file"] {
-            display: none;
-        }
-
-        .upload-icon {
-            font-size: 40px;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .upload-text {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .file-name {
-            margin-top: 10px;
-            color: #667eea;
-            font-weight: bold;
-            font-size: 13px;
-        }
+        .upload-area:hover { background: #f8f9fa; border-color: #a3b822; }
+        .upload-area.dragover { background: #e3f2fd; border-color: #2196f3; }
+        .upload-area input[type="file"] { display: none; }
+        .upload-icon { font-size: 40px; color: #667eea; margin-bottom: 10px; }
+        .upload-text { color: #666; font-size: 14px; }
+        .file-name { margin-top: 10px; color: #abbe32; font-weight: bold; font-size: 13px; }
 
         .btn {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 10px;
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg,  #ff8888bf 0%, #f79393 100%);
+            color: white; border: none; border-radius: 10px;
+            font-size: 15px; font-weight: bold; cursor: pointer;
+            transition: all 0.3s; margin-bottom: 10px;
         }
+        .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(204,128,131,0.4); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .btn-download { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .btn-download:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(17,153,142,0.4); }
 
-        .btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-download {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }
-
-        .btn-download:hover:not(:disabled) {
-            box-shadow: 0 10px 20px rgba(17, 153, 142, 0.4);
-        }
-
-        .settings-box {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-
-        .setting-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .setting-item:last-child {
-            margin-bottom: 0;
-        }
-
-        .setting-item label {
-            flex: 0 0 120px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .setting-item input[type="range"] {
-            flex: 1;
-        }
-
+        .settings-box { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .setting-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .setting-item:last-child { margin-bottom: 0; }
+        .setting-item label { flex: 0 0 120px; color: #666; font-size: 14px; }
+        .setting-item input[type="range"] { flex: 1; }
         .setting-item input[type="number"] {
-            width: 80px;
-            padding: 5px 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
+            width: 80px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;
         }
+        .setting-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
 
-        .setting-item input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .preview-panel {
-            display: flex;
-            flex-direction: column;
-        }
-
+        .preview-panel { display: flex; flex-direction: column; }
         .preview-area {
-            flex: 1;
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            min-height: 400px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: auto;
+            flex: 1; background: #f8f9fa; border-radius: 10px; padding: 20px;
+            min-height: 400px; display: flex; align-items: center; justify-content: center; overflow: auto;
         }
+        .preview-placeholder { text-align: center; color: #999; }
+        .preview-placeholder-icon { font-size: 64px; margin-bottom: 15px; }
+        .preview-image { max-width: 100%; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 
-        .preview-placeholder {
-            text-align: center;
-            color: #999;
+        .loading { text-align: center; color: #667eea; }
+        .loading::after { content: '...'; animation: loading 1.5s infinite; }
+        @keyframes loading { 0%,20%{content:'.'} 40%{content:'..'} 60%,100%{content:'...'} }
+
+        .error { background: #fee; border: 1px solid #fcc; color: #c33; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+        .success { background: #efe; border: 1px solid #cfc; color: #3c3; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 13px; }
+
+        @font-face {
+            font-family: 'FusionPixel';
+            src: url('../Journal-generator/assets/font/fusion-pixel/FusionPixel.ttf') format('truetype');
+            font-display: swap;
         }
-
-        .preview-placeholder-icon {
-            font-size: 64px;
-            margin-bottom: 15px;
-        }
-
-        .preview-image {
-            max-width: 100%;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .loading {
-            text-align: center;
-            color: #667eea;
-        }
-
-        .loading::after {
-            content: '...';
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
-
-        .error {
-            background: #fee;
-            border: 1px solid #fcc;
-            color: #c33;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
-        }
-
-        .success {
-            background: #efe;
-            border: 1px solid #cfc;
-            color: #3c3;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
+        @font-face {
+            font-family: 'ZhangHaiShanRX';
+            src: url('../Journal-generator/assets/font/zhanghaishanrx.ttf') format('truetype');
+            font-display: swap;
         }
     </style>
 </head>
@@ -265,7 +121,7 @@
                 <ul>
                     <li><strong>第1列：</strong>位置（left 或 right）</li>
                     <li><strong>第2列：</strong>名字</li>
-                    <li><strong>第3列：</strong>文本内容</li>
+                    <li><strong>第3列：</strong>文本内容（支持单元格内多行）</li>
                     <li><strong>第4列：</strong>头像URL（可选，支持网络图片）</li>
                     <li><strong>第5列：</strong>气泡颜色（可选，如 #95EC69）</li>
                 </ul>
@@ -283,7 +139,7 @@
                 <div class="setting-item">
                     <label>📏 气泡宽度统一</label>
                     <input type="checkbox" id="uniformWidth" checked>
-                    <span style="color: #666; font-size: 13px;">所有气泡宽度相同</span>
+                    <span style="color:#666;font-size:13px;">所有气泡宽度相同</span>
                 </div>
             </div>
 
@@ -302,7 +158,6 @@
             <h1>🖼️ 预览</h1>
             <div class="preview-area" id="previewArea">
                 <div class="preview-placeholder">
-                    <div class="preview-placeholder-icon">👀</div>
                     <div>上传文件后点击"生成预览"查看效果</div>
                 </div>
             </div>
@@ -327,27 +182,23 @@
 
         let currentData = null;
         let currentImageData = null;
-        let maxBubbleWidth = 400; // 默认气泡最大宽度
-        let isUniformWidth = true; // 默认统一宽度
+        let maxBubbleWidth = 400;
+        let isUniformWidth = true;
 
-        // 同步滑块和输入框
+        const nameFontFamily = '"FusionPixel", "Microsoft YaHei", sans-serif';
+        const textFontFamily = '"ZhangHaiShanRX", "Microsoft YaHei", sans-serif';
+
         widthSlider.addEventListener('input', function() {
             widthInput.value = this.value;
             maxBubbleWidth = parseInt(this.value);
         });
-
         widthInput.addEventListener('input', function() {
             widthSlider.value = this.value;
             maxBubbleWidth = parseInt(this.value);
         });
+        uniformWidth.addEventListener('change', function() { isUniformWidth = this.checked; });
 
-        uniformWidth.addEventListener('change', function() {
-            isUniformWidth = this.checked;
-        });
-
-        // 配置
         const CONFIG = {
-            WIDTH: 800,
             MARGIN: 20,
             BUBBLE_MARGIN: 15,
             AVATAR_SIZE: 50,
@@ -356,48 +207,33 @@
             MESSAGE_SPACING: 20,
             FONT_SIZE: 16,
             NAME_FONT_SIZE: 14,
+            NAME_GAP: 6,
             DEFAULT_AVATAR_COLOR: '#CCCCCC',
             DEFAULT_LEFT_COLOR: '#FFFFFF',
             DEFAULT_RIGHT_COLOR: '#95EC69'
-
         };
 
-        // 点击上传
         uploadArea.addEventListener('click', () => fileInput.click());
-
-        // 文件选择
         fileInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                handleFile(this.files[0]);
-            }
+            if (this.files.length > 0) handleFile(this.files[0]);
         });
 
-        // 拖拽上传
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
         });
 
-        // 处理文件
         function handleFile(file) {
             fileName.textContent = '已选择: ' + file.name;
             errorMsg.innerHTML = '';
 
             const reader = new FileReader();
-
             if (file.name.endsWith('.csv')) {
                 reader.onload = function(e) {
                     Papa.parse(e.target.result, {
@@ -427,7 +263,6 @@
             }
         }
 
-        // 生成预览
         previewBtn.addEventListener('click', async () => {
             if (!currentData) return;
 
@@ -449,7 +284,6 @@
             }
         });
 
-        // 下载图片
         downloadBtn.addEventListener('click', () => {
             if (currentImageData) {
                 const link = document.createElement('a');
@@ -459,204 +293,159 @@
             }
         });
 
-        // 生成聊天图片
         async function generateChatImage(data) {
-            // 解析数据
             const messages = [];
             const userConfig = {};
 
             for (let row of data) {
-                if (!row[0] || !row[1] || !row[2]) continue;
+                if (!row[0] || !row[1] || row[2] === undefined || row[2] === null) continue;
 
                 const position = String(row[0]).trim().toLowerCase();
                 const name = String(row[1]).trim();
-                const text = String(row[2]).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+                let text = String(row[2]).replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+                while (text.endsWith('\n')) {
+                    text = text.slice(0, -1).trim();
+                }
                 const avatarUrl = row[3] ? String(row[3]).trim() : null;
                 const bubbleColor = row[4] ? String(row[4]).trim() : null;
 
                 if (!userConfig[name]) {
-                    userConfig[name] = {
-                        avatar: avatarUrl,
-                        color: bubbleColor
-                    };
+                    userConfig[name] = { avatar: avatarUrl, color: bubbleColor };
                 }
-
                 messages.push({position, name, text});
             }
 
-            // 等待字体加载（确保中文能正确显示）
-            await document.fonts.ready;
+            try {
+                await Promise.all([
+                    document.fonts.load(`${CONFIG.NAME_FONT_SIZE}px "FusionPixel"`),
+                    document.fonts.load(`${CONFIG.FONT_SIZE}px "ZhangHaiShanRX"`),
+                    document.fonts.ready
+                ]);
+            } catch (e) {}
 
-            // 设置字体 - 使用系统字体栈
-            const fontFamily = '"Microsoft YaHei", "SimHei", "PingFang SC", "Hiragino Sans GB", "Heiti SC", Arial, sans-serif';
+            ctx.textBaseline = 'top';
 
-            // 计算画布高度 - 先设置字体再测量
-            ctx.font = `${CONFIG.FONT_SIZE}px ${fontFamily}`;
-            ctx.textBaseline = 'top'; // 设置文本基线为顶部
-
-            // 使用用户设置的气泡宽度上限
-            const actualMaxBubbleWidth = maxBubbleWidth;
-
-            // 先测名字/文本的“自然宽度”
-            ctx.font = `${CONFIG.FONT_SIZE}px ${fontFamily}`;
-            const NAME_GAP = 6; // 名字与正文之间的间距
-
-            // 1) 计算每条消息的“自然气泡宽度”
             const naturalBubbleWidths = messages.map(msg => {
-              const nameWidth = ctx.measureText(msg.name).width;
-              const lines = wrapText(msg.text, actualMaxBubbleWidth - CONFIG.BUBBLE_PADDING * 2);
-              const maxLineWidth = Math.max(1, ...lines.map(line => ctx.measureText(line).width));
-              const contentWidth = Math.max(nameWidth, maxLineWidth);
-              return Math.min(contentWidth + CONFIG.BUBBLE_PADDING * 2, actualMaxBubbleWidth);
+                ctx.font = `${CONFIG.NAME_FONT_SIZE}px ${nameFontFamily}`;
+                const nameWidth = ctx.measureText(msg.name).width;
+
+                ctx.font = `${CONFIG.FONT_SIZE}px ${textFontFamily}`;
+                const lines = wrapText(msg.text, maxBubbleWidth - CONFIG.BUBBLE_PADDING * 2);
+                const maxLineWidth = Math.max(1, ...lines.map(line => ctx.measureText(line).width));
+
+                const contentWidth = Math.max(nameWidth, maxLineWidth);
+                return Math.min(contentWidth + CONFIG.BUBBLE_PADDING * 2, maxBubbleWidth);
             });
 
-            // 2) 若统一宽度，则取自然宽度的最大值作为最终宽度；否则各用各的
             const finalBubbleWidth = isUniformWidth ? Math.max(...naturalBubbleWidths) : null;
             const bubbleWidths = isUniformWidth ? naturalBubbleWidths.map(() => finalBubbleWidth) : naturalBubbleWidths;
 
-            // 3) 依据“最终宽度”重新换行并计算高度（保证高度和实际绘制一致）
             let totalHeight = CONFIG.MARGIN;
             const messageHeights = [];
             const wrappedLinesPerMsg = [];
 
             for (let i = 0; i < messages.length; i++) {
-              const msg = messages[i];
-              const bw = bubbleWidths[i];
-              const lines = wrapText(msg.text, bw - CONFIG.BUBBLE_PADDING * 2);
-              wrappedLinesPerMsg.push(lines);
+                const bw = bubbleWidths[i];
+                ctx.font = `${CONFIG.FONT_SIZE}px ${textFontFamily}`;
+                const lines = wrapText(messages[i].text, bw - CONFIG.BUBBLE_PADDING * 2);
+                wrappedLinesPerMsg.push(lines);
 
-              const textHeight = lines.length * CONFIG.FONT_SIZE + (lines.length - 1) * CONFIG.LINE_SPACING;
-              const bubbleHeight = CONFIG.BUBBLE_PADDING + CONFIG.NAME_FONT_SIZE + NAME_GAP + textHeight + CONFIG.BUBBLE_PADDING;
+                const textHeight = lines.length * CONFIG.FONT_SIZE + Math.max(0, lines.length - 1) * CONFIG.LINE_SPACING;
+                const bubbleHeight = CONFIG.BUBBLE_PADDING * 2 + CONFIG.NAME_FONT_SIZE + CONFIG.NAME_GAP + textHeight;
 
-              messageHeights.push(bubbleHeight);
-              totalHeight += bubbleHeight + CONFIG.MESSAGE_SPACING;
+                messageHeights.push(bubbleHeight);
+                totalHeight += bubbleHeight + CONFIG.MESSAGE_SPACING;
             }
             totalHeight += CONFIG.MARGIN;
 
-            // 画布宽度基于最终使用的气泡宽度（而不是自然宽度）
             const usedBubbleWidth = Math.max(...bubbleWidths);
             const canvasWidth = usedBubbleWidth + CONFIG.MARGIN * 2 + CONFIG.AVATAR_SIZE + CONFIG.BUBBLE_MARGIN + 20;
 
-            // 设置画布大小
             canvas.width = canvasWidth;
             canvas.height = totalHeight;
-
-            // 清空画布（透明背景）
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 重新设置字体和文本基线（清空后需要重新设置）
-            ctx.font = `${CONFIG.FONT_SIZE}px ${fontFamily}`;
-            ctx.textBaseline = 'top';
-
-            // 加载头像
             const avatarImages = {};
             for (let name in userConfig) {
                 const avatarUrl = userConfig[name].avatar;
                 if (avatarUrl) {
-                    try {
-                        avatarImages[name] = await loadImage(avatarUrl);
-                    } catch (e) {
-                        console.warn(`头像加载失败: ${avatarUrl}`);
-                    }
+                    try { avatarImages[name] = await loadImage(avatarUrl); }
+                    catch (e) {}
                 }
             }
 
-            // 绘制消息
             let y = CONFIG.MARGIN;
 
             for (let i = 0; i < messages.length; i++) {
-              const msg = messages[i];
-              const lines = wrappedLinesPerMsg[i];
-              const bubbleHeight = messageHeights[i];
+                const msg = messages[i];
+                const lines = wrappedLinesPerMsg[i];
+                const bubbleHeight = messageHeights[i];
+                const config = userConfig[msg.name] || {};
+                const isLeft = (msg.position === 'left');
 
-              const config = userConfig[msg.name] || {};
-              const isLeft = (msg.position === 'left');
+                const avatarX = isLeft ? CONFIG.MARGIN : canvasWidth - CONFIG.MARGIN - CONFIG.AVATAR_SIZE;
 
-              const avatarX = isLeft
-                ? CONFIG.MARGIN
-                : canvasWidth - CONFIG.MARGIN - CONFIG.AVATAR_SIZE;
+                if (avatarImages[msg.name]) {
+                    drawCircleImage(ctx, avatarImages[msg.name], avatarX, y, CONFIG.AVATAR_SIZE);
+                } else {
+                    ctx.fillStyle = CONFIG.DEFAULT_AVATAR_COLOR;
+                    ctx.beginPath();
+                    ctx.arc(avatarX + CONFIG.AVATAR_SIZE/2, y + CONFIG.AVATAR_SIZE/2, CONFIG.AVATAR_SIZE/2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
 
-              // 头像
-              if (avatarImages[msg.name]) {
-                drawCircleImage(ctx, avatarImages[msg.name], avatarX, y, CONFIG.AVATAR_SIZE);
-              } else {
-                ctx.fillStyle = CONFIG.DEFAULT_AVATAR_COLOR;
-                ctx.beginPath();
-                ctx.arc(avatarX + CONFIG.AVATAR_SIZE/2, y + CONFIG.AVATAR_SIZE/2, CONFIG.AVATAR_SIZE/2, 0, Math.PI * 2);
-                ctx.fill();
-              }
+                const bubbleWidth = bubbleWidths[i];
+                const bubbleX = isLeft
+                    ? (CONFIG.MARGIN + CONFIG.AVATAR_SIZE + CONFIG.BUBBLE_MARGIN)
+                    : (canvasWidth - CONFIG.MARGIN - CONFIG.AVATAR_SIZE - CONFIG.BUBBLE_MARGIN - bubbleWidth);
+                const bubbleY = y;
 
-              // 使用“最终宽度”
-              const bubbleWidth = bubbleWidths[i];
+                const bgColor = config.color || (isLeft ? CONFIG.DEFAULT_LEFT_COLOR : CONFIG.DEFAULT_RIGHT_COLOR);
 
-              // 气泡X：确保不和头像重叠
-              const bubbleX = isLeft
-                ? (CONFIG.MARGIN + CONFIG.AVATAR_SIZE + CONFIG.BUBBLE_MARGIN)
-                : (canvasWidth - CONFIG.MARGIN - CONFIG.AVATAR_SIZE - CONFIG.BUBBLE_MARGIN - bubbleWidth);
+                drawRoundedRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 10, bgColor, '#DDDDDD');
 
-              // 气泡Y 就是 y（名字在气泡内部顶部）
-              const bubbleY = y;
+                const textBlockHeight = lines.length * CONFIG.FONT_SIZE + Math.max(0, lines.length - 1) * CONFIG.LINE_SPACING;
+                const contentHeight = CONFIG.FONT_SIZE + CONFIG.LINE_SPACING + CONFIG.NAME_FONT_SIZE + CONFIG.NAME_GAP + textBlockHeight;
+                const contentTop = bubbleY + (bubbleHeight - contentHeight) / 2;
 
-              // 背景色（单条指定 > 左右默认）
-              const bgColor = config.color || (isLeft ? CONFIG.DEFAULT_LEFT_COLOR : CONFIG.DEFAULT_RIGHT_COLOR);
+                ctx.font = `${CONFIG.NAME_FONT_SIZE}px ${nameFontFamily}`;
+                ctx.fillStyle = '#888888';
+                const nameY = contentTop + CONFIG.FONT_SIZE + CONFIG.LINE_SPACING;
+                ctx.fillText(msg.name, bubbleX + CONFIG.BUBBLE_PADDING, nameY);
 
-              // 画气泡
-              drawRoundedRect(ctx, bubbleX, bubbleY, bubbleWidth, bubbleHeight, 10, bgColor, '#DDDDDD');
+                ctx.font = `${CONFIG.FONT_SIZE}px ${textFontFamily}`;
+                ctx.fillStyle = '#000000';
+                let textY = nameY + CONFIG.NAME_FONT_SIZE + CONFIG.NAME_GAP;
+                for (const line of lines) {
+                    ctx.fillText(line, bubbleX + CONFIG.BUBBLE_PADDING, textY);
+                    textY += CONFIG.FONT_SIZE + CONFIG.LINE_SPACING;
+                }
 
-              // 名字（在气泡内顶部）
-              ctx.font = `${CONFIG.NAME_FONT_SIZE}px ${fontFamily}`;
-              ctx.fillStyle = '#888888';
-              const nameY = bubbleY + CONFIG.BUBBLE_PADDING;
-              ctx.fillText(msg.name, bubbleX + CONFIG.BUBBLE_PADDING, nameY);
-
-              // 正文（名字下方）
-              ctx.font = `${CONFIG.FONT_SIZE}px ${fontFamily}`;
-              ctx.fillStyle = '#000000';
-              let textY = nameY + CONFIG.NAME_FONT_SIZE + NAME_GAP;
-              for (let line of lines) {
-                ctx.fillText(line, bubbleX + CONFIG.BUBBLE_PADDING, textY);
-                textY += CONFIG.FONT_SIZE + CONFIG.LINE_SPACING;
-              }
-
-              y += bubbleHeight + CONFIG.MESSAGE_SPACING;
+                y += bubbleHeight + CONFIG.MESSAGE_SPACING;
             }
 
-
-            // 显示预览
             currentImageData = canvas.toDataURL('image/png');
             previewArea.innerHTML = `<img src="${currentImageData}" class="preview-image" alt="预览">`;
         }
 
-        // 文本换行：先按 \n 强制分段，再对每段做宽度换行；保留空行
         function wrapText(text, maxWidth) {
             const outLines = [];
-            const paragraphs = String(text).split('\n'); // 支持手动换行
-
+            const paragraphs = String(text).split('\n');
             for (const para of paragraphs) {
-                // 空段落（即连续 \n）也要保留一条空行
-                if (para.length === 0) {
-                    outLines.push('');
-                    continue;
-                }
+                if (para.trim().length === 0) continue;
 
                 let current = '';
                 for (const ch of para) {
                     const test = current + ch;
                     const w = ctx.measureText(test).width;
-                    if (w <= maxWidth) {
-                        current = test;
-                    } else {
-                        if (current) outLines.push(current);
-                        current = ch; // 从新字符开始新行
-                    }
+                    if (w <= maxWidth) current = test;
+                    else { if (current) outLines.push(current); current = ch; }
                 }
                 if (current) outLines.push(current);
             }
-
-            return outLines.length ? outLines : [text];
+            return outLines.length ? outLines : [''];
         }
 
-        // 绘制圆角矩形
         function drawRoundedRect(ctx, x, y, width, height, radius, fillColor, strokeColor) {
             ctx.beginPath();
             ctx.moveTo(x + radius, y);
@@ -680,7 +469,6 @@
             }
         }
 
-        // 绘制圆形图片
         function drawCircleImage(ctx, img, x, y, size) {
             ctx.save();
             ctx.beginPath();
@@ -691,7 +479,6 @@
             ctx.restore();
         }
 
-        // 加载图片
         function loadImage(url) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
@@ -702,15 +489,8 @@
             });
         }
 
-        // 显示错误
-        function showError(message) {
-            errorMsg.innerHTML = `<div class="error">❌ ${message}</div>`;
-        }
-
-        // 显示成功
-        function showSuccess(message) {
-            errorMsg.innerHTML = `<div class="success">${message}</div>`;
-        }
+        function showError(message) { errorMsg.innerHTML = `<div class="error">❌ ${message}</div>`; }
+        function showSuccess(message) { errorMsg.innerHTML = `<div class="success">${message}</div>`; }
     </script>
 </body>
 </html>
