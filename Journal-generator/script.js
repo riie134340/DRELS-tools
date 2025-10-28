@@ -410,7 +410,7 @@ class LayoutGenerator {
     preview.style.display = 'block';
   }
 
-  generateLayout() {
+generateLayout() {
     if (this.data.length === 0) {
       alert('请先导入数据');
       return;
@@ -426,7 +426,7 @@ class LayoutGenerator {
       return;
     }
 
-    // 1) 取首屏模板（包含 .box 的结构）
+    // 1) 取首屏模板(包含 .box 的结构)
     const templatePage = pagesContainer.querySelector('.page');
     if (!templatePage) {
       alert('首屏模板 .page 不存在');
@@ -434,18 +434,49 @@ class LayoutGenerator {
     }
     const pageTemplate = templatePage.cloneNode(true); // 深度克隆
 
-    // 2) 清空容器（模板已在内存）
+    // 2) 清空容器(模板已在内存)
     pagesContainer.innerHTML = '';
 
-    // 3) 每页 3 条数据
+    // 3) 展开数据:如果已完成(I列为"是")且G列为"是",插入后续剧情
+    const expandedData = [];
+    this.data.forEach(row => {
+      expandedData.push(row);
+
+      // 检查是否有后续剧情:必须同时满足 I列为"是"(已完成) 和 G列为"是"(有后续)
+      const isCompleted = row['I'] === '是' || row['I'] === 'true' || row['I'] === '完成' || row['I'] === '1';
+      const hasFollow = row['G'] === '是' || row['G'] === 'true' || row['G'] === '1';
+
+      if (isCompleted && hasFollow && row['H']) {
+        // 创建后续剧情事件(使用H列内容)
+        const followUpEvent = {
+          A: row['A'], // 保持相同编号
+          B: row['B'], // 保持相同坐标
+          C: row['C'], // 保持相同区域
+          D: row['H'], // 后续剧情内容来自H列
+          E: row['E'], // 保持相同事件类型
+          F: '-',       // 物资固定为空
+          G: '否',     // 是否有后续固定为否
+          H: '',       // 无后续
+          I: '否', // 保持完成状态
+          J: row['J'], // 行动点消耗
+          K: row['K'], // 使用技能
+          L: row['L']  // 判定等级
+        };
+        expandedData.push(followUpEvent);
+      }
+    });
+
+    console.log('展开后的数据:', expandedData);
+
+    // 4) 每页 3 条数据
     const itemsPerPage = 3;
-    const totalPages = Math.ceil(this.data.length / itemsPerPage);
+    const totalPages = Math.ceil(expandedData.length / itemsPerPage);
 
     for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
       const pageNumber = this.startPageNumber + pageIndex;
       const startIndex = pageIndex * itemsPerPage;
-      const endIndex = Math.min(startIndex + itemsPerPage, this.data.length);
-      const pageData = this.data.slice(startIndex, endIndex);
+      const endIndex = Math.min(startIndex + itemsPerPage, expandedData.length);
+      const pageData = expandedData.slice(startIndex, endIndex);
 
       const page = this.buildPageFromTemplate(pageTemplate, pageNumber, pageData);
       pagesContainer.appendChild(page);
