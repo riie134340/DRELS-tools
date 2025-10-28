@@ -276,7 +276,7 @@ body {
   font-size: 120px;
   text-align: center;
   line-height: 120px;
-  color: rgba(221, 171, 156, 0.3);
+  color: rgba(13, 10, 9, 0.3);
   font-family: 'FusionPixel', monospace;
 }
 
@@ -375,7 +375,7 @@ body {
   width: 650px;
   height: 200px;
   font-family: 'ZhangHaiShanRX';
-  color: rgb(169, 106, 87);
+  color: rgb(87,118,5);
   font-size: 24px;
   line-height: 1.4;
   text-align: left;
@@ -420,10 +420,12 @@ body {
   position: absolute;
   top: 48%;
   left: 50%;
-  width: 192px;     /* 可以调整大小 */
+  width: 200px;
   height: auto;
-  transform: translate(-50%, -50%); /* 完全居中 */
+  transform: translate(-50%, -50%);
   z-index: 20;
   pointer-events: none;
+
+  /* 原有滤镜 */
   filter: brightness(0) invert(1);
 }
