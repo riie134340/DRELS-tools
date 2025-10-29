@@ -548,26 +548,13 @@ generateLayout() {
     return page;
   }
 
-  createBoxContent(rowData) {
-    console.log('createBoxContent 调用，rowData:', rowData);
+createBoxContent(rowData) {
+    console.log('createBoxContent 调用,rowData:', rowData);
 
     const content = document.createElement('div');
     content.className = 'event-content';
 
-    // 根据你提供的列信息，重新映射：
-    // A: #01（编号）
-    // B: 坐标
-    // C: 区域
-    // D: 事件内容
-    // E: 事件类别
-    // F: 物资
-    // G: 是否有后续剧情
-    // H: 事件结算
-    // I: 是否完成
-    // J: 行动点消耗
-    // K: 使用技能
-    // L: 判定等级
-
+    // 根据你提供的列信息,重新映射:
     const coordinate = rowData['B'] || '';      // 坐标
     const area = rowData['C'] || '';            // 区域
     const description = rowData['D'] || '';     // 事件内容
@@ -575,11 +562,14 @@ generateLayout() {
     const reward = rowData['F'] || '';          // 物资
     const isCompleted = rowData['I'] === '是' || rowData['I'] === 'true' || rowData['I'] === '完成' || rowData['I'] === '1';
 
+    // 判断是否是后续剧情:物资为"-"表示这是后续剧情
+    const isFollowUpEvent = reward === '-';
+
     console.log('提取的数据:', {
-      coordinate, area, description, eventType, reward, isCompleted
+      coordinate, area, description, eventType, reward, isCompleted, isFollowUpEvent
     });
 
-    // 图标类型映射表（6种图标类型）
+    // 图标类型映射表(6种图标类型)
     const iconMapping = {
       // 中文到英文的映射
       '自然': 'nature',
@@ -597,7 +587,7 @@ generateLayout() {
       'wildcard': 'wildcard'
     };
 
-    // 图标：使用CSS样式类
+    // 图标:使用CSS样式类
     if (eventType) {
       const icon = document.createElement('img');
       icon.className = 'event-icon';
@@ -613,7 +603,7 @@ generateLayout() {
       content.appendChild(icon);
     }
 
-    // 地理位置：使用CSS样式类
+    // 地理位置:使用CSS样式类
     if (coordinate || area) {
       const location = document.createElement('div');
       location.className = 'event-location';
@@ -621,7 +611,7 @@ generateLayout() {
       content.appendChild(location);
     }
 
-    // 事件描述：使用CSS样式类
+    // 事件描述:使用CSS样式类
     if (description) {
       const desc = document.createElement('div');
       desc.className = 'event-description';
@@ -629,19 +619,21 @@ generateLayout() {
       content.appendChild(desc);
     }
 
-    // 奖励：使用CSS样式类
-    const rewardDiv = document.createElement('div');
-    rewardDiv.className = 'event-reward';
-    rewardDiv.textContent = isCompleted ? `获得物资：${reward}` : '获得物资：？';
-    content.appendChild(rewardDiv);
+    // 奖励:只有在不是后续剧情时才显示
+    if (!isFollowUpEvent) {
+      const rewardDiv = document.createElement('div');
+      rewardDiv.className = 'event-reward';
+      rewardDiv.textContent = isCompleted ? `获得物资:${reward}` : '获得物资:?';
+      content.appendChild(rewardDiv);
+    }
 
-    // 如果已完成，添加遮罩
+    // 如果已完成,添加遮罩
     if (isCompleted) {
       const mask = document.createElement('div');
       mask.className = 'event-mask';
       content.appendChild(mask);
 
-      // 判定等级（S/A/B/C）
+      // 判定等级(S/A/B/C)
       const grade = (rowData['L'] || '').toUpperCase();
       const validGrades = ['S', 'A', 'B', 'C'];
       if (validGrades.includes(grade)) {
@@ -652,9 +644,8 @@ generateLayout() {
       }
     }
 
-    return content;
+    return content;  // 确保这行存在!
   }
-
   async exportToPNG() {
     const pages = document.querySelectorAll('.page');
     if (pages.length === 0) {
