@@ -410,7 +410,7 @@ class LayoutGenerator {
     preview.style.display = 'block';
   }
 
-generateLayout() {
+  generateLayout() {
     if (this.data.length === 0) {
       alert('请先导入数据');
       return;
@@ -548,13 +548,12 @@ generateLayout() {
     return page;
   }
 
-createBoxContent(rowData) {
+  createBoxContent(rowData) {
     console.log('createBoxContent 调用,rowData:', rowData);
 
     const content = document.createElement('div');
     content.className = 'event-content';
 
-    // 根据你提供的列信息,重新映射:
     const coordinate = rowData['B'] || '';      // 坐标
     const area = rowData['C'] || '';            // 区域
     const description = rowData['D'] || '';     // 事件内容
@@ -603,6 +602,14 @@ createBoxContent(rowData) {
       content.appendChild(icon);
     }
 
+    // 如果是后续剧情,在图标后面添加 NEW! 标识
+    if (isFollowUpEvent) {
+      const newBadge = document.createElement('div');
+      newBadge.className = 'event-new-badge';
+      newBadge.textContent = 'NEW!';
+      content.appendChild(newBadge);
+    }
+
     // 地理位置:使用CSS样式类
     if (coordinate || area) {
       const location = document.createElement('div');
@@ -644,8 +651,9 @@ createBoxContent(rowData) {
       }
     }
 
-    return content;  // 确保这行存在!
+    return content;
   }
+
   async exportToPNG() {
     const pages = document.querySelectorAll('.page');
     if (pages.length === 0) {
